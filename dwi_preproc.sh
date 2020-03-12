@@ -406,7 +406,7 @@ while [ ${#} -gt 0 ]; do
     --interp) shift; eddy_interp=${1} ;;
     --residuals) eddy_residuals=true ;;
     --repol) eddy_repol=true ;;
-    --cnr_maps) cnr_maps=true ;;
+    --cnr_maps) eddy_cnr=true ;;
     --mporder) shift; mporder=${1} ;;
     --s2v_niter) shift; s2v_niter=${1} ;;
     --s2v_lambda) shift; s2v_lambda=${1} ;;
