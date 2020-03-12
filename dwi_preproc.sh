@@ -490,13 +490,14 @@ if [ -z ${dataDir} ]; then
   echo_red "Data directory was specified at the command line but was not provided. Please check."
   run echo "Data directory was specified at the command line but was not provided. Please check."
   exit 1
-else
-  dataDir=$(realpath ${dataDir})
+# else
+#   dataDir=$(realpath ${dataDir})
 fi
 
 if [ ! -d ${dataDir}/logs ]; then
   echo_blue "Making Log Directory"
   run mkdir -p ${dataDir}/logs
+  dataDir=$(realpath ${dataDir})
 fi
 
 
