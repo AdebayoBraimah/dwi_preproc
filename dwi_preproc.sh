@@ -915,13 +915,15 @@ if [ ${bids} = "true" ]; then
   for ((i = 0; i < ${#parameter[@]}; i++)); do
     param=${paramVar[$i]}
     eval ${param}=$(grep ${parameter[$i]} ${dwiParams} | awk '{print $2}')
+    z_dir_slices=$(${FSLBIN}/fslval ${dwi} dim3)
   done
 elif [ ${bids} = "false" ]; then
   # Compute the necessary variable(s)
   # reconMatPE (Phase Encoded Reconstruction Matrix)
   # is equivalent to the number of phase encoding steps
-  # in the Z-direction.
-  reconMatPE=$(${FSLBIN}/fslval ${dwi} dim3)
+  # in the Y-direction (usually the PA direction)
+  reconMatPE=$(${FSLBIN}/fslval ${dwi} dim2)
+  z_dir_slices=$(${FSLBIN}/fslval ${dwi} dim3)
 fi
 
 # Output directory file check variables
@@ -1000,7 +1002,7 @@ fi
 # Write slice acquisition file
 if [ ${mb} -eq 0 ]; then mb=1; fi # Check if multi-band factor is 0, if so, change to 1
 slspec=${work}/dwi.misc/slice_spec.txt
-run ${scriptsDir}/mb_slice_order.py --slices ${reconMatPE} --mb ${mb} --mode interleaved --out ${slspec}
+run ${scriptsDir}/mb_slice_order.py --slices ${z_dir_slices} --mb ${mb} --mode interleaved --out ${slspec}
 
 # Write acqp (ACQuired Parameters) file
 param=${work}/dwi.misc/mr_params.acqp
