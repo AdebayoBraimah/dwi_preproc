@@ -435,6 +435,9 @@ if [ ${verbose} = "true" ]; then
   set -x # for verbose printing/debugging
 fi
 
+# Enable FSL's python environment
+source ${FSLDIR}/fslpython/bin/activate
+
 # Write temporary log files (change log filenames later)
 log=$(pwd)/${RANDOM}.log
 err=$(pwd)/${RANDOM}.err
