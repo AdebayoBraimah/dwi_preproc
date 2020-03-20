@@ -435,9 +435,6 @@ if [ ${verbose} = "true" ]; then
   set -x # for verbose printing/debugging
 fi
 
-# Enable FSL's python environment
-source ${FSLDIR}/fslpython/bin/activate
-
 # Write temporary log files (change log filenames later)
 log=$(pwd)/${RANDOM}.log
 err=$(pwd)/${RANDOM}.err
@@ -1293,6 +1290,9 @@ fi
 #
 # DWI Preprocessing: Stage 6 - QC (eddy_quad)
 #==============================================================================
+
+# Enable FSL's python environment
+source ${FSLDIR}/fslpython/bin/activate
 
 # test and include options for s2v processed data
 if [ ${qc} = "true" ] && [ ! -d ${outDir}/Eddy.qc ] && [ ${runTopup} = "true" ]; then
