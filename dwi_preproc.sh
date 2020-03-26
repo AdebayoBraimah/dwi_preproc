@@ -795,8 +795,9 @@ if [[ ! -z ${eddy_niter} ]]; then
 fi
 
 if [[ ! -z ${eddy_fwhm} ]]; then
+  ifs_tmp=${IFS}
   IFS="," read -ra fwhm <<< ${eddy_fwhm}
-  IFS=" "
+  IFS=${ifs_tmp}
   if ! [[ "${fwhm}" =~ ^[0-9]+$ ]]; then
           echo_red "Eddy FWHM argument requires integers only [1-9999999]"
           run echo "Eddy FWHM argument requires integers only [1-9999999]"
@@ -1045,6 +1046,9 @@ if [ ! -z ${etl} ]; then
   # [1] = EPI readout time
   dwell=${varsEPI[0]}
   readTime=${varsEPI[1]}
+
+  run echo ${dwell}
+  run echo ${readTime}
 fi
 
 # Write slice acquisition file
