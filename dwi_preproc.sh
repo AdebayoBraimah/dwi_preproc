@@ -188,6 +188,8 @@ Topup Specific Arguments (Should a rPE B0 be provided):
 
 Eddy Arguments:
 
+--niter           Eddy's number of iterations [default: 5]
+--fwhm            Eddy FWHM for conditioning filter when estimating the parameters [default: 0]
 --interp          Eddy interpolation model for estimation step ('spline'/'trilinear') [Default: spline]
 --residuals       Write residuals (between GP and observations) [Default: disabled]
 --repol           Detect and replace outlier slices [Default: disabled]
@@ -369,6 +371,8 @@ additional=false
 fig=false
 
 # Eddy defaults
+eddy_niter=5
+eddy_fwhm=0
 eddy_interp=spline # trilinear, spline
 eddy_residuals=false
 eddy_repol=false
@@ -400,6 +404,8 @@ while [ ${#} -gt 0 ]; do
     --wfs) shift; wfs=${1} ;;
     --acc|--acceleration) shift; acc=${1} ;;
     --mb) shift; mb=${1} ;;
+    --niter) shift; eddy_niter=${1} ;;
+    --fwhm) shift; eddy_fwhm=${1} ;;
     --tensor) tensor=true ;;
     --qc) qc=true ;;
     -f|--fsldir) shift; FSLDIR=${1} ;;
@@ -780,6 +786,29 @@ if [ ! -z ${readTime} ]; then
 fi
 
 # Eddy Specific Optional Arguments
+if [[ ! -z ${eddy_niter} ]]; then
+  if ! [[ "${eddy_niter}" =~ ^[0-9]+$ ]]; then
+          echo_red "Eddy number of iterations argument requires integers only [1-9999999]"
+          run echo "Eddy number of iterations argument requires integers only [1-9999999]"
+          exit 1
+  fi
+fi
+
+if [[ ! -z ${eddy_fwhm} ]]; then
+  IFS="," read -ra fwhm <<< ${eddy_fwhm}
+  IFS=" "
+  if ! [[ "${fwhm}" =~ ^[0-9]+$ ]]; then
+          echo_red "Eddy FWHM argument requires integers only [1-9999999]"
+          run echo "Eddy FWHM argument requires integers only [1-9999999]"
+          exit 1
+  fi
+  if [[ ${eddy_niter} != ${#fwhm[@]} ]]; then
+    echo_red "Eddy number of iterations and FWHM arguments have unequal specifications. See usage FSL's eddy usage."
+    run echo "Eddy number of iterations and FWHM arguments have unequal specifications. See usage FSL's eddy usage."
+    exit 1
+  fi
+fi
+
 if [ -z ${eddy_interp} ]; then
   echo_red "eddy interpolation method was specified at the command line but was not provided. Please check."
   run echo "eddy interpolation method was specified at the command line but was not provided. Please check."
@@ -1128,6 +1157,14 @@ if [ ! -f ${outDir}/${subID}_dwi.nii.gz ] && [ ! -f ${outDir}/${subID}_dwi.bvec 
   eddy_corr+="--out=${out_dwi} --verbose "
 
   # (Additional) Eddy Specific Optional Arguments/Parameters
+  if [[ ! -z ${eddy_niter} ]]; then
+    eddy_corr+="--niter=${eddy_niter} "
+  fi
+
+  if [[ ! -z ${eddy_fwhm} ]]; then
+    eddy_corr+="--fwhm=${eddy_fwhm} "
+  fi
+
   if [ ! -z ${eddy_interp} ]; then
     eddy_corr+="--interp=${eddy_interp} "
   fi
