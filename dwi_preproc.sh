@@ -957,6 +957,25 @@ if [ ! -f ${outDir}/${subID}_dwi.nii.gz ]; then
     numB0s=$(zeropad ${numB0s} 3)
     run ${FSLBIN}/fslroi ${dwi} ${work}/Topup/B0s_PA_num-${numB0s} --tmin ${numB0s}
 
+    src_dim1=$(fslval ${dwi} dim1)
+    src_dim2=$(fslval ${dwi} dim2)
+    src_dim3=$(fslval ${dwi} dim3)
+
+    b0_dim1=$(fslval ${B0} dim1)
+    b0_dim2=$(fslval ${B0} dim2)
+    b0_dim3=$(fslval ${B0} dim3)
+
+    if [[ ${b0_dim1} != ${src_dim1} ]] || [[ ${b0_dim2} != ${src_dim2} ]] || [[ ${b0_dim3} != ${src_dim3} ]]; then
+      run mkdir -p ${work}/Topup/tmp_align; cd ${work}/Topup/tmp_align
+      run flirt -in ${B0} -ref ${work}/Topup/B0s_PA_num-${numB0s} -omat b02dwi.aff.mat -dof 12
+      run aff2rigid b02dwi.aff.mat b02dwi.rigid.mat
+      run applywarp --in=${B0} --out=b02dwi.rigid.nii.gz --ref=${work}/Topup/B0s_PA_num-${numB0s} --premat=b02dwi.rigid.mat
+      run rm ${B0}
+      run mv b02dwi.rigid.nii.gz ${B0}
+      run cd ${work}/Topup
+      run rm -rf ${work}/Topup/tmp_align
+    fi
+
     # Merge B0s
     run ${FSLBIN}/fslmaths ${B0} -Tmean ${work}/Topup/mean_B0s_AP.nii.gz
     run ${FSLBIN}/fslmaths ${work}/Topup/B0s_PA_num-${numB0s}.nii.gz  -Tmean ${work}/Topup/mean_B0s_PA.nii.gz
