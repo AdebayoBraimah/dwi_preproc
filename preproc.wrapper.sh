@@ -47,10 +47,10 @@ in_2000=${scripts_dir}/misc.info/dwi.data.info/b2000.list.txt
 data_2000=/scratch/brac4g/IRC317H/BIDS/derivatives/dwi_preproc.s2v/b2000.preproc
 
 # args
-niter=8
-fwhm="10,8,4,2,0,0,0,0"
-mporder=6
-s2v_niter=5
+niter=5
+fwhm="10,5,0,0,0"
+mporder=8
+s2v_niter=10
 s2v_lambda=1
 
 wall=1000

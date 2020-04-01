@@ -217,6 +217,9 @@ NOTES:
   Stages: 5, and 7), which can run as standalone versions.
 - Temporary log files are written to the current workind directory. One should 
   ensure that one has write permissions in the current working directory.
+- Some options have been hard-coded as to reflect the preprocessing used in the 
+  dHCP dwi preprocessing: https://git.fmrib.ox.ac.uk/matteob/dHCP_neo_dMRI_pipeline_release/-/tree/master
+    - Those hard-coded options include: --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 --nvoxhp=5000 --ol_type=both  --ol_nstd=3
 
 ----------------------------------------
 
@@ -1151,7 +1154,8 @@ if [ ! -f ${outDir}/${subID}_dwi.nii.gz ] && [ ! -f ${outDir}/${subID}_dwi.bvec 
   # Main Eddy Arguments/Parameters
   if [ ${runTopup} = "true" ]; then
     out_dwi=${work}/Eddy/${subID}_eddy_dist_corr
-    eddy_corr+="--topup=${work}/Topup/suscept_corr_B0 "
+    # eddy_corr+="--topup=${work}/Topup/suscept_corr_B0 "
+    eddy_corr+="--topup=${work}/Topup/suscept_corr_B0 --estimate_move_by_susceptibility --mbs_niter=20 --mbs_ksp=10 --mbs_lambda=10 "
   else
     out_dwi=${work}/Eddy/${subID}_eddy_corr
   fi
@@ -1187,7 +1191,8 @@ if [ ! -f ${outDir}/${subID}_dwi.nii.gz ] && [ ! -f ${outDir}/${subID}_dwi.bvec 
   fi
 
   # Perform Eddy Current & Motion Correction
-  run ${eddy_corr}
+  # run ${eddy_corr}
+  run ${eddy_corr} --nvoxhp=5000 --ol_type=both  --ol_nstd=3 # --very_verbose --dont_mask_output
 
   bvec=$(ls *rotated_bvecs*)
   bvec=$(realpath ${bvec})
