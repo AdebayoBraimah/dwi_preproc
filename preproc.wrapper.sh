@@ -5,6 +5,11 @@
 # Performing DWI preproc with slice-to-volume 
 # motion correction using GPUs.
 
+# See this link to make changes to eddy command:
+# https://git.fmrib.ox.ac.uk/matteob/dHCP_neo_dMRI_pipeline_release/-/tree/master
+# https://git.fmrib.ox.ac.uk/matteob/dHCP_neo_dMRI_pipeline_release/-/blob/master/dHCP_neo_dMRI_runEddy.sh
+
+
 # Test shell
 # bsub -W 800 -M 16000 -q gpu-nodes -R "span[hosts=1]" -R "rusage[gpu=1]" -n 4 -Is bash
 # scripts_dir=/scratch/brac4g/IRC317H/BIDS/scripts/dwi_preproc
