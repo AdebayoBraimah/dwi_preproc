@@ -999,6 +999,8 @@ if [ ! -f ${outDir}/${subID}_dwi.nii.gz ]; then
     b0_dim3=$(fslval ${B0} dim3)
 
     if [[ ${b0_dim1} != ${src_dim1} ]] || [[ ${b0_dim2} != ${src_dim2} ]] || [[ ${b0_dim3} != ${src_dim3} ]]; then
+      # Enable FSL's python environment
+      source ${FSLDIR}/fslpython/bin/activate
       run mkdir -p ${work}/Topup/tmp_align; cd ${work}/Topup/tmp_align
       run flirt -in ${B0} -ref ${work}/Topup/B0s_PA_num-${numB0s} -omat b02dwi.aff.mat -dof 12
       run aff2rigid b02dwi.aff.mat b02dwi.rigid.mat
@@ -1007,6 +1009,8 @@ if [ ! -f ${outDir}/${subID}_dwi.nii.gz ]; then
       run mv b02dwi.rigid.nii.gz ${B0}
       run cd ${work}/Topup
       run rm -rf ${work}/Topup/tmp_align
+      # Disable FSL's python environment
+      conda deactivate
     fi
 
     # Merge B0s
@@ -1374,6 +1378,9 @@ fi
 if [ ${qc} = "true" ] && [ ! -d ${outDir}/Eddy.qc ]; then
   run cp -r ${work}/Eddy.qc ${outDir}
 fi
+
+# Disable FSL's python environment
+conda deactivate
 
 #
 # DWI Preprocessing: Stage 7 - Create DTI-TK Images (DTI-TK)
