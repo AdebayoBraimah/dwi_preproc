@@ -60,6 +60,7 @@ mkd_sub(){
 
 cat <<- mkdwn_sub >> ${mkdwn}
 ## sub-${sub}                  
+
 mkdwn_sub
 }
 
@@ -74,10 +75,12 @@ mkd_link(){
   local pic4=${5}
 
 cat <<- mkdwn_sub >> ${mkdwn}  
+
 ![](${pic1})          
 ![](${pic2})          
 ![](${pic3})          
 ![](${pic4})          
+
 mkdwn_sub
 }
 

@@ -1,0 +1,20 @@
+sub-dwi.preproc.qc_bval-b800_dwi.preproc.qc does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc_bval-b800_dwi.preproc.qc.20_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc_bval-b800_dwi.preproc.qc.30_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc_bval-b800_dwi.qc.imgs.sh does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.20_Mar_2020_bval-b800_dwi.preproc.qc does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.20_Mar_2020_bval-b800_dwi.preproc.qc.20_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.20_Mar_2020_bval-b800_dwi.preproc.qc.30_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.20_Mar_2020_bval-b800_dwi.qc.imgs.sh does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.20_Mar_2020_bval-b800_err_log.txt does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.30_Mar_2020_bval-b800_dwi.preproc.qc does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.30_Mar_2020_bval-b800_dwi.preproc.qc.20_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.30_Mar_2020_bval-b800_dwi.preproc.qc.30_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.30_Mar_2020_bval-b800_dwi.qc.imgs.sh does not have a complete set of preprocessed dMR image files
+sub-dwi.preproc.qc.30_Mar_2020_bval-b800_err_log.txt does not have a complete set of preprocessed dMR image files
+sub-dwi.qc.imgs.sh_bval-b800_dwi.preproc.qc does not have a complete set of preprocessed dMR image files
+sub-dwi.qc.imgs.sh_bval-b800_dwi.preproc.qc.20_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.qc.imgs.sh_bval-b800_dwi.preproc.qc.30_Mar_2020 does not have a complete set of preprocessed dMR image files
+sub-dwi.qc.imgs.sh_bval-b800_dwi.qc.imgs.sh does not have a complete set of preprocessed dMR image files
+sub-dwi.qc.imgs.sh_bval-b800_err_log.txt does not have a complete set of preprocessed dMR image files
+sub-C03_bval-b2000_run-01 does not have any QC information
