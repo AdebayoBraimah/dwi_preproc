@@ -222,17 +222,23 @@ import_info(){
 }
 
 
+# TODO: 
+#   * Add function to separate DWI PE b0
+#   * Add function to create index (idx) file
+
+
 #######################################
 # Imports relevant data and information needed
 # for diffusion weighted image (DWI) preprocessing.
 # Globals:
 #   log
 #   err
-# Arguments:
+# Required Arguments:
 #   d, dwi: Input DWI file.
 #   b, bval: Corresponding bval file.
 #   e, bvec: Corresponding bvec file.
 #   b0: Reversed phase encoded b0 (or single band reference).
+# Optional Arguments:
 #   data-dir: Output parent data directory.
 #   slspec: Slice order specification file.
 #   idx: Slice phase encoding index.
@@ -267,11 +273,11 @@ import_data(){
   done
 
   # Local variable info
-  local sub_id=$($(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $1}' | sed "s@sub-@@g")
-  local run_id=$($(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
-  local dwi_PE=$($(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
-  local bshell=$($(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
-  local outdir=${data_dir}/sub-${sub_id}/${bshell}/${run_id}
+  local sub_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $1}' | sed "s@sub-@@g")
+  local run_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
+  local dwi_PE=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
+  local bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
+  local outdir=${data_dir}/sub-${sub_id}/b${bshell}/run-${run_id}
 
   # Check (required) input arguments
   if [[ -z ${data_dir} ]]; then
@@ -352,7 +358,7 @@ import_data(){
 }
 
 
-N4(){}
+# N4(){}
 
 
 
@@ -364,6 +370,17 @@ main(){
 
   # Check args
 
+  # TEST ARGS
+  local dwi=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.nii.gz
+  local bval=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bval
+  local bvec=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bvec
+  local sbref=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b0TE88_dir-AP_run-01_sbref.nii.gz
+  local outdir=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/test_proc
+
   # Check dependencies
-  deps=( )
+  local deps=( topup eddy )
+
+  import_data --dwi ${dwi} --bval ${bval} --bvec ${bvec} --b0 ${sbref} --data-dir ${outdir}
 }
+
+main "${@}"
