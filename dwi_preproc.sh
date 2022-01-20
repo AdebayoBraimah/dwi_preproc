@@ -181,51 +181,106 @@ check_dim(){
 
 
 #######################################
-# Imports relevant information such as slice
-# order, phase encoding index, and acquisition
-# parameters.
-# Globals:
-#   log
-#   err
-# Arguments:
-#   outdir: Output directory.
-#   slspec: Slice order specification file.
-#   idx: Slice phase encoding index.
-#   acqp: Acquisition parameter file.
+# Writes the index file for use with FSL's
+# topup, and eddy. 
+# 
+# NOTE: This function assumes uniform phase-encoding
+#   for the DWI/dMRI. The output index file is just 
+#   a sequence 1's.
+# Required Arguments:
+#   dwi: Input DWI file.
+#   out-idx: Slice phase encoding index.
 # Returns
 #   0 if no errors, non-zero on error.
 #######################################
-import_info(){
+write_idx(){
   # Parse arguments
   while [[ ${#} -gt 0 ]]; do
     case "${1}" in
-      --outdir) shift; local outdir=${1} ;;
-      --slspec) shift; local slspec=${1} ;;
-      --idx) shift; local idx=${1} ;;
-      --acqp) shift; local acqp=${1} ;;
+      --dwi) shift; local dwi=${1} ;;
+      --out-idx) shift; local out_idx=${1} ;;
       -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
       *) break ;;
     esac
     shift
   done
 
+  # Number of volumes/dynamics
+  nvols=( $( echo $(seq 1 1 $(fslval ${dwi} dim4)) ) )
+
+  log "LOG | write_idx: Writing DWI/dMRI index file. NOTE: this assumes uniform phase encoding in the dMRI."
+
+  for i in ${nvols[@]}; do
+    echo "1" >> ${out_idx}
+  done
+}
+
+
+#######################################
+# Imports relevant information such as slice
+# order, phase encoding index, and acquisition
+# parameters.
+# Globals:
+#   log
+#   err
+# Required Arguments:
+#   slspec: Slice order specification file.
+#   acqp: Acquisition parameter file.
+#   out-slspec: Output filename of the slice order specification file.
+#   out-acqp: Output filename of the acquisition parameter file.
+# Optional Arguments:
+#   idx: Slice phase encoding index.
+#   out-idx: Output filename of the slice phase encoding index.
+#   dwi: Input DWI file.
+# Returns
+#   0 if no errors, non-zero on error.
+#######################################
+import_info(){
+  # Set defaults
+  local idx=""
+  local dwi=""
+
+  # Parse arguments
+  while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
+      # --outdir) shift; local outdir=${1} ;;
+      --slspec) shift; local slspec=${1} ;;
+      --idx) shift; local idx=${1} ;;
+      --acqp) shift; local acqp=${1} ;;
+      --dwi) shift; local dwi=${1} ;;
+      --out-slspec) shift; local out_slspec=${1} ;;
+      --out-idx) shift; local out_idx=${1} ;;
+      --out-acqp) shift; local out_acqp=${1} ;;
+      -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+      *) break ;;
+    esac
+    shift
+  done
+
+  if [[ ! -f ${idx} ]] && [[ -f ${dwi} ]] && [[ ! -z ${out_idx} ]]; then
+    run write_idx --dwi ${dwi} --out-idx ${out_idx}
+    idx=${out_idx}
+  fi
+
   # Check input arguments
-  [[ -z ${outdir} ]] && log "ERROR | import_info: Output directory required." && exit_error "ERROR | import_info: Output directory required."
+  # [[ -z ${outdir} ]] && log "ERROR | import_info: Output directory required." && exit_error "ERROR | import_info: Output directory required."
   [[ -z ${slspec} ]] || [[ ! -f ${slspec} ]] && log "ERROR | import_info: Slice specification order file required." && exit_error "ERROR | import_info: Slice specification order file required."
   [[ -z ${idx} ]] || [[ ! -f ${idx} ]] && log "ERROR | import_info: Slice index file required." && exit_error "ERROR | import_info: Slice index file required."
   [[ -z ${acqp} ]] || [[ ! -f ${acqp} ]] && log "ERROR | import_info: Acquisition parameters file required." && exit_error "ERROR | import_info: Acquisition parameters file required."
 
+  [[ -z ${out_slspec} ]] && log "ERROR | import_info: Slice specification order output filename required." && exit_error "ERROR | import_info: Slice specification order output filename required."
+  [[ -z ${out_idx} ]] && log "ERROR | import_info: Slice index output filename required." && exit_error "ERROR | import_info: Slice index output filename required."
+  [[ -z ${out_acqp} ]] && log "ERROR | import_info: Acquisition parameters output filename required." && exit_error "ERROR | import_info: Acquisition parameters output filename required."
+
   # Import info
-  run cp ${slspec} ${outdir}
-  run cp ${idx} ${outdir}
-  run cp ${acqp} ${outdir}
+  run cp ${slspec} ${out_slspec}
+  run cp ${idx} ${out_idx}
+  run cp ${acqp} ${out_acqp}
 }
 
 
 # TODO: 
 #   * Add function to separate DWI PE b0
-#   * Add function to create index (idx) file
-
 
 #######################################
 # Imports relevant data and information needed
