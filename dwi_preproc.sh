@@ -355,6 +355,8 @@ import_data(){
   [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/rpe_sbref.json
 
   wait
+
+  echo "${outdir}"
 }
 
 
