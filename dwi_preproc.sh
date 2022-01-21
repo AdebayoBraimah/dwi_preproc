@@ -117,7 +117,7 @@ run(){
 #######################################
 log(){
   echo "${@}"
-  echo "${@}" >>${log} 2>>${err}
+  # echo "${@}" >>${log} 2>>${err}
   echo "-----------------------"
 }
 
@@ -158,7 +158,7 @@ check_dim(){
     case "${1}" in
       --dwi) shift; local dwi=${1} ;;
       --b0) shift; local b0=${1} ;;
-      -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+      -*) echo_red "$(basename ${0}) | check_dim: Unrecognized option ${1}" >&2; Usage; ;;
       *) break ;;
     esac
     shift
@@ -199,7 +199,7 @@ write_idx(){
     case "${1}" in
       --dwi) shift; local dwi=${1} ;;
       --out-idx) shift; local out_idx=${1} ;;
-      -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+      -*) echo_red "$(basename ${0}) | write_idx: Unrecognized option ${1}" >&2; Usage; ;;
       *) break ;;
     esac
     shift
@@ -211,7 +211,7 @@ write_idx(){
   log "LOG | write_idx: Writing DWI/dMRI index file. NOTE: this assumes uniform phase encoding in the dMRI."
 
   for i in ${nvols[@]}; do
-    echo "1" >> ${out_idx}
+    echo "1" >> "${out_idx}"
   done
 }
 
@@ -243,7 +243,6 @@ import_info(){
   # Parse arguments
   while [[ ${#} -gt 0 ]]; do
     case "${1}" in
-      # --outdir) shift; local outdir=${1} ;;
       --slspec) shift; local slspec=${1} ;;
       --idx) shift; local idx=${1} ;;
       --acqp) shift; local acqp=${1} ;;
@@ -251,16 +250,26 @@ import_info(){
       --out-slspec) shift; local out_slspec=${1} ;;
       --out-idx) shift; local out_idx=${1} ;;
       --out-acqp) shift; local out_acqp=${1} ;;
-      -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+      -*) echo_red "$(basename ${0}) | import_info: Unrecognized option ${1}" >&2; Usage; ;;
       *) break ;;
     esac
     shift
   done
 
   if [[ ! -f ${idx} ]] && [[ -f ${dwi} ]] && [[ ! -z ${out_idx} ]]; then
+    echo ${out_idx}
     run write_idx --dwi ${dwi} --out-idx ${out_idx}
     idx=${out_idx}
+  else
+    run cp ${idx} ${out_idx}
   fi
+
+  # run write_idx --dwi ${dwi} --out-idx ${out_idx}
+  # idx=${out_idx}
+
+  log "idx file: ${out_idx}"
+  log "spec file: ${out_slspec}"
+  log "acqp file: ${out_acqp}"
 
   # Check input arguments
   # [[ -z ${outdir} ]] && log "ERROR | import_info: Output directory required." && exit_error "ERROR | import_info: Output directory required."
@@ -274,7 +283,6 @@ import_info(){
 
   # Import info
   run cp ${slspec} ${out_slspec}
-  run cp ${idx} ${out_idx}
   run cp ${acqp} ${out_acqp}
 }
 
@@ -321,7 +329,7 @@ import_data(){
       --dwi-json) shift; local dwi_json=${1} ;;
       --b0-json) shift; local b0_json=${1} ;;
       --data-dir) shift; local data_dir=${1} ;;
-      -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+      -*) echo_red "$(basename ${0}) | import_data: Unrecognized option ${1}" >&2; Usage; ;;
       *) break ;;
     esac
     shift
@@ -399,7 +407,8 @@ import_data(){
   fi
 
   check_dim --dwi ${dwi} --b0 ${b0}
-  run import_info --outdir ${outdir}/import --slspec ${slspec} --idx ${idx} --acqp ${acqp}
+
+  run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
 
   run imcp ${dwi} ${outdir}/import/dwi &
   run imcp ${b0} ${outdir}/import/rpe_sbref &
@@ -415,7 +424,9 @@ import_data(){
 }
 
 
-# N4(){}
+N4(){
+  N4BiasFieldCorrection "${@}"
+}
 
 
 
@@ -427,17 +438,51 @@ main(){
 
   # Check args
 
-  # TEST ARGS
-  local dwi=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.nii.gz
-  local bval=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bval
-  local bvec=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bvec
-  local sbref=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b0TE88_dir-AP_run-01_sbref.nii.gz
-  local outdir=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/test_proc
+  # # TEST ARGS (LOCAL MAC OS)
+  # local dwi=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.nii.gz
+  # local bval=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bval
+  # local bvec=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bvec
+  # local sbref=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b0TE88_dir-AP_run-01_sbref.nii.gz
+  # local outdir=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/test_proc
+
+  # TEST ARGS (LOCAL CENTOS)
+  local dwi=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.nii.gz
+  local bval=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.bval
+  local bvec=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.bvec
+  local sbref=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b0TE88_dir-AP_run-01_sbref.nii.gz
+
+  local dwi_json=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.json
+  local sbref_json=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b0TE88_dir-AP_run-01_sbref.json
+
+  local outdir=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/test_data/test_proc
+
+  local slice_order=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/misc/b800/dwi.b800.slice_order
+  local params=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/misc/b800/dwi.params.b800.acq
+
+  # # Load modules
+  # module load fsl/6.0.4
+  # module load ants/2.3.1
+  # 
+  # # Add MRtrix3 SS3T to PATH
+  # export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
 
   # Check dependencies
-  local deps=( topup eddy )
+  local deps=( topup eddy N4 )
 
-  import_data --dwi ${dwi} --bval ${bval} --bvec ${bvec} --b0 ${sbref} --data-dir ${outdir}
+  for dep in ${deps[@]}; do
+    dependency_check ${dep}
+  done
+
+  import_data \
+  --dwi ${dwi} \
+  --bval ${bval} \
+  --bvec ${bvec} \
+  --b0 ${sbref} \
+  --data-dir ${outdir} \
+  --acqp ${params} \
+  --slspec ${slice_order} \
+  --dwi-json ${dwi_json} \
+  --b0-json ${sbref_json}
 }
 
 main "${@}"
