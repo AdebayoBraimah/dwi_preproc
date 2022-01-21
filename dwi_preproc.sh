@@ -9,6 +9,9 @@
 #   style guide here: https://google.github.io/styleguide/shellguide.html
 # 
 
+# SET SCRIPT GLOBALS
+scripts_dir=$(echo $(dirname $(realpath ${0})))
+
 #######################################
 # Prints usage to the command line interface.
 # Arguments:
@@ -206,7 +209,7 @@ write_idx(){
   done
 
   # Number of volumes/dynamics
-  nvols=( $( echo $(seq 1 1 $(fslval ${dwi} dim4)) ) )
+  local nvols=( $( echo $(seq 1 1 $(fslval ${dwi} dim4)) ) )
 
   log "LOG | write_idx: Writing DWI/dMRI index file. NOTE: this assumes uniform phase encoding in the dMRI."
 
@@ -258,7 +261,7 @@ import_info(){
 
   if [[ ! -f ${idx} ]] && [[ -f ${dwi} ]] && [[ ! -z ${out_idx} ]]; then
     run write_idx --dwi ${dwi} --out-idx ${out_idx}
-    idx=${out_idx}
+    local idx=${out_idx}
   else
     run cp ${idx} ${out_idx}
   fi
@@ -306,8 +309,8 @@ extract_b0(){
   done
 
   # Create tmp dir
-  cwd=${PWD}
-  tmp_dir=$(remove_ext ${out})_tmp_${RANDOM}
+  local cwd=${PWD}
+  local tmp_dir=$(remove_ext ${out})_tmp_${RANDOM}
   run mkdir -p ${tmp_dir}
   run cd ${tmp_dir}
 
@@ -432,6 +435,7 @@ import_data(){
   fi
 
   # Declare global variables
+  local cwd=${PWD}
   local log_dir=${outdir}/logs
   log=${log_dir}/dwi.log
   err=${log_dir}/dwi.err
@@ -453,23 +457,95 @@ import_data(){
   run cp ${dwi} ${outdir}/import/dwi.bvec
 
   [[ ! -z ${dwi_json} ]] && run cp ${dwi_json} ${outdir}/import/dwi.json
-  [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/sbref_ap.json
+  [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/phase.json
 
   wait
+
+  # Merge b0s
+  cd ${outdir}
+  fslmerge -t ${outdir}/import/phase ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
+
+  # Minor clean-up
+  imrm ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
+  cd ${cwd}
 
   echo "${outdir}"
 }
 
 
+#######################################
+# N4 retrospective bias correction algorithm.
+# Globals:
+#   log
+#   err
+# Arguments:
+#   Same arguments as N4BiasFieldCorrection.
+# Returns
+#   0 if no errors, non-zero on error.
 N4(){
   N4BiasFieldCorrection "${@}"
 }
 
 
-# TODO: 
+# TODO:
+#   * Separate major functions into different scripts
+#     * Reference these scripts from this main script
+
+
+# Workflow: 
 #   1. Topup
 #   2. Eddy
 #   3. Post-process (DTI-FIT)
+#   4. Tractography
+
+
+#######################################
+# Performs image distortion correction of dMRI
+# via FSL's topup.
+# Globals:
+#   log
+#   err
+# Required Arguments:
+#   p, phase: Input 4D opposite phase encoded image.
+#   a, acqp: Acquisition parameters file.
+#   c, config: Input topup configurations file.
+#   out-dir: Parent output directory.
+# Returns
+#   0 if no errors, non-zero on error.
+#######################################
+run_topup(){
+  # Set defaults
+  local config=${scripts_dir}/misc/b02b0.cnf
+  
+  # Parse arguments
+  while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
+      -p|--phase) shift; local phase=${1} ;;
+      -a|--acqp) shift; local acqp=${1} ;;
+      -c|--config) shift; local config=${1} ;;
+      --out-dir) shift; local outdir=${1} ;;
+      -*) echo_red "$(basename ${0}) | run_topup: Unrecognized option ${1}" >&2; Usage; ;;
+      *) break ;;
+    esac
+    shift
+  done
+
+  # Topup output dir
+  local topup_dir=${outdir}/topup
+  [[ ! -d ${topup_dir} ]] && run mkdir -p topup_dir
+
+  # Run topup
+  topup \
+  --imain=${phase} \
+  --datain=${acqp} \
+  --config=${config} \
+  --fout=${topup_dir}/fieldmap \
+  --iout=${topup_dir}/topup_b0s \
+  --out=${topup_dir}/topup_results \
+  -v
+
+  echo "${topup_dir}"
+}
 
 
 
@@ -507,22 +583,15 @@ main(){
   # export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
 
   # Check dependencies
-  local deps=( topup eddy N4 )
+  local deps=( topup eddy N4 mrconvert dwiextract )
 
   for dep in ${deps[@]}; do
     dependency_check ${dep}
   done
 
-  import_data \
-  --dwi ${dwi} \
-  --bval ${bval} \
-  --bvec ${bvec} \
-  --b0 ${sbref} \
-  --data-dir ${outdir} \
-  --acqp ${params} \
-  --slspec ${slice_order} \
-  --dwi-json ${dwi_json} \
-  --b0-json ${sbref_json}
+  outdir=$(import_data --dwi ${dwi} --bval ${bval} --bvec ${bvec} --b0 ${sbref} --data-dir ${outdir} --acqp ${params} --slspec ${slice_order} --dwi-json ${dwi_json} --b0-json ${sbref_json})
+
+  # run_topup --phase ${outdir}/import/phase --acqp ${outdir}/import/dwi.params.acqp --out-dir ${outdir}
 
   log "END"
 }
