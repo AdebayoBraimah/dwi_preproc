@@ -103,6 +103,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${FSLDIR}/fslpython/envs/fslpython/lib
 
 # Add MRtrix3 SS3T to PATH
 export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
+export PYTHONPATH=${PYTHONPATH}:$(which python3):$(which python2)
 
 # Check dependencies
 deps=( topup eddy mrconvert dwiextract ss3t_csd_beta1 )
@@ -126,9 +127,30 @@ log=${log_dir}/dwi.log
 err=${log_dir}/dwi.err
 
 
-${scripts_dir}/src/import.sh --b0 ${sbref} --dwi ${dwi} --bval ${bval} --bvec ${bvec} --data-dir ${data_dir} --acqp ${params} --slspec ${slice_order} --dwi-json ${dwi_json} --b0-json ${sbref_json}
-${scripts_dir}/src/run_topup.sh --phase ${outdir}/import/phase --acqp ${outdir}/import/dwi.params.acqp --out-dir ${outdir}
-${scripts_dir}/src/run_eddy.sh --dwi ${dwi} --bval ${bval} --bvec ${bvec} --outdir ${outdir} --acqp ${outdir}/import/dwi.params.acqp --slspec ${outdir}/import/dwi.slice_order --topup-dir ${topup_dir}
+${scripts_dir}/src/import.sh \
+--b0 ${sbref} \
+--dwi ${dwi} \
+--bval ${bval} \
+--bvec ${bvec} \
+--data-dir ${data_dir} \
+--acqp ${params} \
+--slspec ${slice_order} \
+--dwi-json ${dwi_json} \
+--b0-json ${sbref_json}
+
+${scripts_dir}/src/run_topup.sh \
+--phase ${outdir}/import/phase 
+--acqp ${outdir}/import/dwi.params.acqp \
+--out-dir ${outdir}
+
+${scripts_dir}/src/run_eddy.sh \
+--dwi ${dwi} \
+--bval ${bval} \
+--bvec ${bvec} \
+--outdir ${outdir} \
+--acqp ${outdir}/import/dwi.params.acqp \
+--slspec ${outdir}/import/dwi.slice_order \
+--topup-dir ${topup_dir}
 
 ${scripts_dir}/src/postproc.sh \
 --dwi ${eddy_dir}/eddy_corrected.nii.gz \
