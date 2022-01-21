@@ -234,3 +234,25 @@ create_mask(){
   run cd ${cwd}
 
 }
+
+
+#######################################
+# xfm_tck wrapper function for the 
+# tractography python CLI. CLI options
+# are the same as the referenced command
+# line tool.
+# Globals:
+#   log
+#   err
+# Arguments:
+#   Same arguments as xfm_tck.py
+# Returns
+#   0 if no errors, non-zero on error.
+#######################################
+xfm_tck(){
+  local scripts_dir=$(echo $(dirname $(realpath ${0})))
+  # local cmd=$(realpath ${scripts_dir}/../pkgs/xfm_tck/xfm_tck.py)
+  local cmd=$(realpath ${scripts_dir}/pkgs/xfm_tck/xfm_tck.py)
+  echo "scripts_dir: ${scripts_dir}"
+  run ${cmd} "${@}"
+}
