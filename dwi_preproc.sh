@@ -92,18 +92,30 @@ data_dir=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/test_dat
 slice_order=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/misc/b800/dwi.b800.slice_order
 params=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/misc/b800/dwi.params.b800.acq
 
-# Load modules
-module load anaconda3/1.0.0
-module load fsl/6.0.4
-module load cuda/9.1
+# Tractography test files
+## AAL
+template=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-withSkull.nii.gz)
+template_brain=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-withCerebellum.nii.gz)
+labels=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-aal.nii.gz)
 
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${FSLDIR}/fslpython/envs/fslpython/lib
+# ## dHCP (use single subject files)
+# struct_dir=/data/AICAD-HeLab/Data_TeamShare/dHCP_work/CINEPS/t2_work/struc_processed/derivatives_corrected
+# template=$(realpath ${struct_dir}/sub-144/ses-*/anat/*T2w_restore.nii.*)
+# template_brain=$(realpath ${struct_dir}/sub-144/ses-*/anat/*T2w_restore_brain.nii.*)
+# labels=$(realpath ${struct_dir}/sub-144/ses-*/anat/*drawem_all_labels.nii.*)
 
-# module load ants/2.3.1
-
-# Add MRtrix3 SS3T to PATH
-export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
-export PYTHONPATH=${PYTHONPATH}:$(which python3):$(which python2)
+# # Load modules
+# module load anaconda3/1.0.0
+# module load fsl/6.0.4
+# module load cuda/9.1
+# 
+# export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${FSLDIR}/fslpython/envs/fslpython/lib
+# 
+# # module load ants/2.3.1
+# 
+# # Add MRtrix3 SS3T to PATH
+# export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
+# export PYTHONPATH=${PYTHONPATH}:$(which python3):$(which python2)
 
 # Check dependencies
 deps=( topup eddy mrconvert dwiextract ss3t_csd_beta1 )
@@ -120,7 +132,10 @@ bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}
 
 outdir=${data_dir}/sub-${sub_id}/${bshell}/run-${run_id}
 topup_dir=${outdir}/topup
-eddy_dir=${outdir}/eddy 
+eddy_dir=${outdir}/eddy
+preproc_dir=${outdir}/preprocessed_data
+tract_dir=${outdir}/tractography/AAL
+# tract_dir=${outdir}/tractography/dHCP_40wk
 
 log_dir=${outdir}/logs
 log=${log_dir}/dwi.log
@@ -139,7 +154,7 @@ ${scripts_dir}/src/import.sh \
 --b0-json ${sbref_json}
 
 ${scripts_dir}/src/run_topup.sh \
---phase ${outdir}/import/phase 
+--phase ${outdir}/import/phase \
 --acqp ${outdir}/import/dwi.params.acqp \
 --out-dir ${outdir}
 
@@ -163,6 +178,22 @@ ${scripts_dir}/src/postproc.sh \
 --idx ${outdir}/import/dwi.idx \
 --acqp ${outdir}/import/dwi.params.acqp \
 --topup-dir ${topup_dir}
+
+xfm_tck \
+--dwi=${preproc_dir}/dwi.nii.gz \
+--bval=${preproc_dir}/dwi.bval \
+--bvec=${preproc_dir}/dwi.bvec \
+--json=${preproc_dir}/dwi.json \
+--log=${log_dir}/tract.log \
+--template=${template} \
+--template-brain=${template_brain} \
+--labels=${labels} \
+--out-dir=${tract_dir} \
+--frac-int=0.25 \
+--QIT \
+--symmetric \
+--zero-diagonal \
+--FA --MD --AD --RD \
 
 log "END"
 
