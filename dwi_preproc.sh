@@ -118,7 +118,7 @@ run(){
 log(){
   echo "${@}"
   # echo "${@}" >>${log} 2>>${err}
-  echo "-----------------------"
+  # echo "-----------------------"
 }
 
 
@@ -257,22 +257,13 @@ import_info(){
   done
 
   if [[ ! -f ${idx} ]] && [[ -f ${dwi} ]] && [[ ! -z ${out_idx} ]]; then
-    echo ${out_idx}
     run write_idx --dwi ${dwi} --out-idx ${out_idx}
     idx=${out_idx}
   else
     run cp ${idx} ${out_idx}
   fi
 
-  # run write_idx --dwi ${dwi} --out-idx ${out_idx}
-  # idx=${out_idx}
-
-  log "idx file: ${out_idx}"
-  log "spec file: ${out_slspec}"
-  log "acqp file: ${out_acqp}"
-
   # Check input arguments
-  # [[ -z ${outdir} ]] && log "ERROR | import_info: Output directory required." && exit_error "ERROR | import_info: Output directory required."
   [[ -z ${slspec} ]] || [[ ! -f ${slspec} ]] && log "ERROR | import_info: Slice specification order file required." && exit_error "ERROR | import_info: Slice specification order file required."
   [[ -z ${idx} ]] || [[ ! -f ${idx} ]] && log "ERROR | import_info: Slice index file required." && exit_error "ERROR | import_info: Slice index file required."
   [[ -z ${acqp} ]] || [[ ! -f ${acqp} ]] && log "ERROR | import_info: Acquisition parameters file required." && exit_error "ERROR | import_info: Acquisition parameters file required."
@@ -287,8 +278,53 @@ import_info(){
 }
 
 
-# TODO: 
-#   * Add function to separate DWI PE b0
+#######################################
+# Extracts and merges b0s in a dMRI volume.
+# Globals:
+#   log
+#   err
+# Required Arguments:
+#   d, dwi: Input DWI file.
+#   b, bval: Corresponding bval file.
+#   e, bvec: Corresponding bvec file.
+#   o, out: Output file name.
+# Returns
+#   0 if no errors, non-zero on error.
+#######################################
+extract_b0(){
+  # Parse arguments
+  while [[ ${#} -gt 0 ]]; do
+    case "${1}" in
+      -d|--dwi) shift; local dwi=${1} ;;
+      -b|--bval) shift; local bval=${1} ;;
+      -e|--bvec) shift; local bvec=${1} ;;
+      -o|--out) shift; local out=${1} ;;
+      -*) echo_red "$(basename ${0}) | extract_b0: Unrecognized option ${1}" >&2; Usage; ;;
+      *) break ;;
+    esac
+    shift
+  done
+
+  # Create tmp dir
+  cwd=${PWD}
+  tmp_dir=$(remove_ext ${out})_tmp_${RANDOM}
+  run mkdir -p ${tmp_dir}
+  run cd ${tmp_dir}
+
+  # Create mif file
+  run mrconvert -fslgrad ${bvec} ${bval} ${dwi} dwi.mif
+
+  # Extract b0s
+  run dwiextract -bzero dwi.mif dwi.b0.nii.gz
+
+  # Merge b0s
+  run fslmaths dwi.b0.nii.gz -Tmean ${out}
+
+  # Clean-up
+  cd ${cwd}
+  rm -rf ${tmp_dir}
+}
+
 
 #######################################
 # Imports relevant data and information needed
@@ -340,7 +376,7 @@ import_data(){
   local run_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
   local dwi_PE=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
   local bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
-  local outdir=${data_dir}/sub-${sub_id}/b${bshell}/run-${run_id}
+  local outdir=${data_dir}/sub-${sub_id}/${bshell}/run-${run_id}
 
   # Check (required) input arguments
   if [[ -z ${data_dir} ]]; then
@@ -409,14 +445,15 @@ import_data(){
   check_dim --dwi ${dwi} --b0 ${b0}
 
   run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
+  run extract_b0 --dwi ${dwi} --bval ${bval} --bvec ${bvec} --out ${outdir}/import/sbref_pa.nii.gz
 
   run imcp ${dwi} ${outdir}/import/dwi &
-  run imcp ${b0} ${outdir}/import/rpe_sbref &
+  run imcp ${b0} ${outdir}/import/sbref_ap &
   run cp ${dwi} ${outdir}/import/dwi.bval
   run cp ${dwi} ${outdir}/import/dwi.bvec
 
   [[ ! -z ${dwi_json} ]] && run cp ${dwi_json} ${outdir}/import/dwi.json
-  [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/rpe_sbref.json
+  [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/sbref_ap.json
 
   wait
 
@@ -429,7 +466,10 @@ N4(){
 }
 
 
-
+# TODO: 
+#   1. Topup
+#   2. Eddy
+#   3. Post-process (DTI-FIT)
 
 
 
@@ -483,6 +523,8 @@ main(){
   --slspec ${slice_order} \
   --dwi-json ${dwi_json} \
   --b0-json ${sbref_json}
+
+  log "END"
 }
 
 main "${@}"
