@@ -185,54 +185,6 @@ import_info(){
 }
 
 
-#######################################
-# Extracts and merges b0s in a dMRI volume.
-# Globals:
-#   log
-#   err
-# Required Arguments:
-#   d, dwi: Input DWI file.
-#   b, bval: Corresponding bval file.
-#   e, bvec: Corresponding bvec file.
-#   o, out: Output file name.
-# Returns
-#   0 if no errors, non-zero on error.
-#######################################
-extract_b0(){
-  # Parse arguments
-  while [[ ${#} -gt 0 ]]; do
-    case "${1}" in
-      -d|--dwi) shift; local dwi=${1} ;;
-      -b|--bval) shift; local bval=${1} ;;
-      -e|--bvec) shift; local bvec=${1} ;;
-      -o|--out) shift; local out=${1} ;;
-      -*) echo_red "$(basename ${0}) | extract_b0: Unrecognized option ${1}" >&2; Usage; ;;
-      *) break ;;
-    esac
-    shift
-  done
-
-  # Create tmp dir
-  local cwd=${PWD}
-  local tmp_dir=$(remove_ext ${out})_tmp_${RANDOM}
-  run mkdir -p ${tmp_dir}
-  run cd ${tmp_dir}
-
-  # Create mif file
-  run mrconvert -fslgrad ${bvec} ${bval} ${dwi} dwi.mif
-
-  # Extract b0s
-  run dwiextract -bzero dwi.mif dwi.b0.nii.gz
-
-  # Merge b0s
-  run fslmaths dwi.b0.nii.gz -Tmean ${out}
-
-  # Clean-up
-  cd ${cwd}
-  rm -rf ${tmp_dir}
-}
-
-
 # SCRIPT MAIN BODY
 
 # Parse arguments
@@ -326,29 +278,29 @@ err=${log_dir}/dwi.err
 if [[ ! -d ${outdir}/import ]]; then
   mkdir -p ${log_dir}
   run mkdir -p ${outdir}/import
+
+  check_dim --dwi ${dwi} --b0 ${b0}
+
+  run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
+  run extract_b0 --dwi ${dwi} --bval ${bval} --bvec ${bvec} --out ${outdir}/import/sbref_pa.nii.gz
+
+  run imcp ${dwi} ${outdir}/import/dwi &
+  run imcp ${b0} ${outdir}/import/sbref_ap &
+  run cp ${bval} ${outdir}/import/dwi.bval
+  run cp ${bvec} ${outdir}/import/dwi.bvec
+
+  [[ ! -z ${dwi_json} ]] && run cp ${dwi_json} ${outdir}/import/dwi.json
+  [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/phase.json
+
+  wait
+
+  # Merge b0s
+  cd ${outdir}
+  fslmerge -t ${outdir}/import/phase ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
+
+  # Minor clean-up
+  imrm ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
+  cd ${cwd}
+
+  # echo "${outdir}"
 fi
-
-check_dim --dwi ${dwi} --b0 ${b0}
-
-run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
-run extract_b0 --dwi ${dwi} --bval ${bval} --bvec ${bvec} --out ${outdir}/import/sbref_pa.nii.gz
-
-run imcp ${dwi} ${outdir}/import/dwi &
-run imcp ${b0} ${outdir}/import/sbref_ap &
-run cp ${dwi} ${outdir}/import/dwi.bval
-run cp ${dwi} ${outdir}/import/dwi.bvec
-
-[[ ! -z ${dwi_json} ]] && run cp ${dwi_json} ${outdir}/import/dwi.json
-[[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/phase.json
-
-wait
-
-# Merge b0s
-cd ${outdir}
-fslmerge -t ${outdir}/import/phase ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
-
-# Minor clean-up
-imrm ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
-cd ${cwd}
-
-# echo "${outdir}"
