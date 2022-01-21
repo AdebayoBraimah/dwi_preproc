@@ -12,6 +12,9 @@
 # SET SCRIPT GLOBALS
 scripts_dir=$(echo $(dirname $(realpath ${0})))
 
+# SOURCE LOGGING FUNCTIONS
+. ${scripts_dir}/lib.sh
+
 #######################################
 # Prints usage to the command line interface.
 # Arguments:
@@ -34,92 +37,57 @@ USAGE
 }
 
 
-#######################################
-# Prints message to the command line interface
-#   in some arbitrary color.
-# Arguments:
-#   msg
-#######################################
-echo_color(){
-  msg='\033[0;'"${@}"'\033[0m'
-  echo -e ${msg} 
-}
+# SCRIPT MAIN BODY
 
+# Set defaults
+config=${scripts_dir}/../misc/b02b0.cnf
 
-#######################################
-# Prints message to the command line interface
-#   in red.
-# Arguments:
-#   msg
-#######################################
-echo_red(){
-  echo_color '31m'"${@}"
-}
+# Parse arguments
+[[ ${#} -eq 0 ]] && Usage;
+while [[ ${#} -gt 0 ]]; do
+  case "${1}" in
+    -p|--phase) shift; phase=${1} ;;
+    -a|--acqp) shift; acqp=${1} ;;
+    -c|--config) shift; config=${1} ;;
+    --out-dir) shift; outdir=${1} ;;
+    -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+    *) break ;;
+  esac
+  shift
+done
 
+# Log variabes
+log_dir=${outdir}/logs
+log=${log_dir}/dwi.log
+err=${log_dir}/dwi.err
 
-#######################################
-# Prints message to the command line interface
-#   in green.
-# Arguments:
-#   msg
-#######################################
-echo_green(){
-  echo_color '32m'"${@}"
-}
+# Topup output dir
+topup_dir=${outdir}/topup
+if [[ ! -d ${topup_dir} ]]; then 
+  run mkdir -p ${topup_dir}
+fi
 
+# echo "phase: ${phase}"
+# echo "acqp: ${acqp}"
+# echo "config: ${config}"
+# echo "outdir: ${outdir}"
+# echo "topup_dir: ${topup_dir}"
 
-#######################################
-# Prints message to the command line interface
-#   in blue.
-# Arguments:
-#   msg
-#######################################
-echo_blue(){
-  echo_color '36m'"${@}"
-}
+cd ${topup_dir}
 
+run imcp ${phase} phase && phase=${PWD}/phase
+run cp ${acqp} params.acqp && acqp=params.acqp
 
-#######################################
-# Prints message to the command line interface
-#   in red when an error is intened to be raised.
-# Arguments:
-#   msg
-#######################################
-exit_error(){
-  echo_red "${@}"
-  exit 1
-}
+log "RUNNING: TOPUP"
 
+# Run topup
+run topup \
+--imain=${phase} \
+--datain=${acqp} \
+--config=${config} \
+--fout=${topup_dir}/fieldmap \
+--iout=${topup_dir}/topup_b0s \
+--out=${topup_dir}/topup_results \
+-v
 
-#######################################
-# Logs the command to file, and executes (runs) the command.
-# Globals:
-#   log
-#   err
-# Arguments:
-#   Command to be logged and performed.
-#######################################
-run(){
-  echo "${@}"
-  "${@}" >>${log} 2>>${err}
-  if [[ ! ${?} -eq 0 ]]; then
-    echo "failed: see log files ${log} ${err} for details"
-    exit 1
-  fi
-  echo "-----------------------"
-}
-
-
-#######################################
-# Logs the command to file.
-# Globals:
-#   log
-#   err
-# Arguments:
-#   Command to be logged and performed.
-#######################################
-log(){
-  echo "${@}"
-  # echo "${@}" >>${log} 2>>${err}
-  # echo "-----------------------"
-}
+# echo "${topup_dir}"
