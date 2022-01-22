@@ -25,11 +25,42 @@ Usage(){
   Usage: 
       
       $(basename ${0}) <--options> [--options]
+  
+  Performs similar preprocessing steps to that of the dHCP dMRI preprocessing pipeline.
+  These preprocessing steps include:
+
+    1. Topup (distortion estimation)
+    2. Eddy (eddy current, motion, distortion, and slice-to-volume motion correction)
+    3. QC
+    4. DTI model fitting
+    5. Tractography (Single-Shell CSD)
+
+  Options marked as REPEATABLE may be specified more than once, however must all such options
+  must be specified the same number of times.
+
+  Lastly, input data is assumed to be named in the BIDS v1.4.1+ convention, with '*_acq-' containing
+  the shells (bvalues) of the acquisition. Other attributes in the filename should include:
+
+    * subject ID (sub-<sub_id>_...)
+    * run ID (..._run-<run_id>_...)
 
   Required arguments
-    -ARGS
+    -d, --dwi                       Input 4D dMR/DW image file.
+    -b, --bval                      Corresponding bval file.
+    -e, --bvec                      Corresponding bvec file.
+    -b0, --b0, --sbref              Reverse phase encoded b0 (single-band reference)
+    --slspec                        Slice order specification file.
+    --acqp                          Acquisition parameter file.
+    --data-dir                      Output parent data directory.
+    --template                      REPEATABLE: Standard whole-head template for registration and tractography.
+    --template-brain                REPEATABLE: Standard brain template for registration and tractography.
+    --labels                        REPEATABLE: Corrsponding template labels for tractography.
+    --out-tract                     REPEATABLE: Corrsponding output directory basenames for tractography.
   
   Optional arguments
+    --dwi-json                      Corresponding dMR/DW image JSON sidecar.
+    --b0-json, --sbref-json         Corresponding b0/sbref JSON sidecar.
+    --idx                           Slice phase encoding index file.
     -h, -help, --help               Prints the help menu, then exits.
 
 USAGE
@@ -54,68 +85,40 @@ dependency_check(){
 }
 
 
-# TODO:
-#   * Separate major functions into different scripts
-#     * Reference these scripts from this main script
-
-
-# Workflow: 
-#   1. Topup
-#   2. Eddy
-#   3. Post-process (DTI-FIT)
-#   4. Tractography
-
-
-
 # SCRIPT BODY
 
+# Parse arguments
+[[ ${#} -eq 0 ]] && Usage;
+while [[ ${#} -gt 0 ]]; do
+  case "${1}" in
+    -d|--dwi) shift; dwi=${1} ;;
+    -b|--bval) shift; bval=${1} ;;
+    -e|--bvec) shift; bvec=${1} ;;
+    -b0|--b0|--sbref) shift; sbref=${1} ;;
+    --slspec) shift; slspec=${1} ;;
+    --idx) shift; idx=${1} ;;
+    --acqp) shift; acqp=${1} ;;
+    --dwi-json) shift; dwi_json=${1} ;;
+    --b0-json|--sbref-json) shift; b0_json=${1} ;;
+    --data-dir) shift; data_dir=${1} ;;
+    --template) shift; templates+=( ${1} ) ;;
+    --template-brain) shift; template_brains+=( ${1} ) ;;
+    --labels) shift; labels+=( ${1} ) ;;
+    --out-tract) shift; out_tracts+=( ${1} ) ;;
+    -h|-help|--help) shift; Usage; ;;
+    -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
+    *) break ;;
+  esac
+  shift
+done
+
 # Check args
-
-# # TEST ARGS (LOCAL MAC OS)
-# local dwi=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.nii.gz
-# local bval=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bval
-# local bvec=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b800_dir-PA_run-01_dwi.bvec
-# local sbref=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/sub-144/sub-144_acq-b0TE88_dir-AP_run-01_sbref.nii.gz
-# local outdir=/Users/adebayobraimah/Desktop/projects/dwi_preproc/test_data/test_proc
-
-# TEST ARGS (LOCAL CENTOS)
-dwi=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.nii.gz
-bval=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.bval
-bvec=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.bvec
-sbref=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b0TE88_dir-AP_run-01_sbref.nii.gz
-
-dwi_json=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b800_dir-PA_run-01_dwi.json
-sbref_json=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata/sub-144/dwi/sub-144_acq-b0TE88_dir-AP_run-01_sbref.json
-
-data_dir=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/test_data/test_proc
-
-slice_order=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/misc/b800/dwi.b800.slice_order
-params=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc/misc/b800/dwi.params.b800.acq
-
-# Tractography test files
-## AAL
-template=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-withSkull.nii.gz)
-template_brain=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-withCerebellum.nii.gz)
-labels=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-aal.nii.gz)
-
-# ## dHCP (use single subject files)
-# struct_dir=/data/AICAD-HeLab/Data_TeamShare/dHCP_work/CINEPS/t2_work/struc_processed/derivatives_corrected
-# template=$(realpath ${struct_dir}/sub-144/ses-*/anat/*T2w_restore.nii.*)
-# template_brain=$(realpath ${struct_dir}/sub-144/ses-*/anat/*T2w_restore_brain.nii.*)
-# labels=$(realpath ${struct_dir}/sub-144/ses-*/anat/*drawem_all_labels.nii.*)
-
-# # Load modules
-# module load anaconda3/1.0.0
-# module load fsl/6.0.4
-# module load cuda/9.1
-# 
-# export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${FSLDIR}/fslpython/envs/fslpython/lib
-# 
-# # module load ants/2.3.1
-# 
-# # Add MRtrix3 SS3T to PATH
-# export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
-# export PYTHONPATH=${PYTHONPATH}:$(which python3):$(which python2)
+if [[ ${#templates[@]} -eq ${#template_brains[@]} ]] && [[ ${#template_brains[@]} -eq ${#labels[@]} ]] && [[ ${#labels[@]} -eq ${#out_tracts[@]} ]]; then
+  echo ""
+else
+  echo_red "Unequal number of mulit-input options."
+  Usage;
+fi
 
 # Check dependencies
 deps=( topup eddy mrconvert dwiextract ss3t_csd_beta1 )
@@ -127,29 +130,28 @@ done
 # variable info
 sub_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $1}' | sed "s@sub-@@g")
 run_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
-dwi_PE=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
 bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
 
 outdir=${data_dir}/sub-${sub_id}/${bshell}/run-${run_id}
 topup_dir=${outdir}/topup
 eddy_dir=${outdir}/eddy
 preproc_dir=${outdir}/preprocessed_data
-tract_dir=${outdir}/tractography/AAL
-# tract_dir=${outdir}/tractography/dHCP_40wk
 
 log_dir=${outdir}/logs
 log=${log_dir}/dwi.log
 err=${log_dir}/dwi.err
 
+mkdir -p ${log_dir}
 
+# Preprocess data
 ${scripts_dir}/src/import.sh \
 --b0 ${sbref} \
 --dwi ${dwi} \
 --bval ${bval} \
 --bvec ${bvec} \
 --data-dir ${data_dir} \
---acqp ${params} \
---slspec ${slice_order} \
+--acqp ${acqp} \
+--slspec ${slspec} \
 --dwi-json ${dwi_json} \
 --b0-json ${sbref_json}
 
@@ -179,23 +181,110 @@ ${scripts_dir}/src/postproc.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --topup-dir ${topup_dir}
 
-xfm_tck \
---dwi=${preproc_dir}/dwi.nii.gz \
---bval=${preproc_dir}/dwi.bval \
---bvec=${preproc_dir}/dwi.bvec \
---json=${preproc_dir}/dwi.json \
---log=${log_dir}/tract.log \
---template=${template} \
---template-brain=${template_brain} \
---labels=${labels} \
---out-dir=${tract_dir} \
---frac-int=0.25 \
---QIT \
---symmetric \
---zero-diagonal \
---FA --MD --AD --RD \
+for (( i=0; i < ${#templates[@]}; i++)); do
+  xfm_tck \
+  --dwi=${preproc_dir}/dwi.nii.gz \
+  --bval=${preproc_dir}/dwi.bval \
+  --bvec=${preproc_dir}/dwi.bvec \
+  --json=${preproc_dir}/dwi.json \
+  --log=${log_dir}/tract.log \
+  --template=${templates[$i]} \
+  --template-brain=${template_brains[$i]} \
+  --labels=${labels[$i]} \
+  --out-dir=${outdir}/${out_tracts[$i]} \
+  --frac-int=0.25 \
+  --QIT \
+  --symmetric \
+  --zero-diagonal \
+  --FA --MD --AD --RD --no-cleanup
+done
 
-log "END"
+log "END: dMRI Preprocessing"
 
 # job submission command
 # bsub -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 20000 -W 8000 ./dwi_preproc.sh
+
+
+# ###########################
+# # OLD CODE
+# ###########################
+
+# # Check dependencies
+# deps=( topup eddy mrconvert dwiextract ss3t_csd_beta1 )
+
+# for dep in ${deps[@]}; do
+#   dependency_check ${dep}
+# done
+
+# # variable info
+# sub_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $1}' | sed "s@sub-@@g")
+# run_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
+# dwi_PE=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
+# bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
+
+# outdir=${data_dir}/sub-${sub_id}/${bshell}/run-${run_id}
+# topup_dir=${outdir}/topup
+# eddy_dir=${outdir}/eddy
+# preproc_dir=${outdir}/preprocessed_data
+# # tract_dir=${outdir}/tractography/AAL
+# tract_dir=${outdir}/tractography/dHCP_40wk
+
+# log_dir=${outdir}/logs
+# log=${log_dir}/dwi.log
+# err=${log_dir}/dwi.err
+
+
+# ${scripts_dir}/src/import.sh \
+# --b0 ${sbref} \
+# --dwi ${dwi} \
+# --bval ${bval} \
+# --bvec ${bvec} \
+# --data-dir ${data_dir} \
+# --acqp ${params} \
+# --slspec ${slice_order} \
+# --dwi-json ${dwi_json} \
+# --b0-json ${sbref_json}
+
+# ${scripts_dir}/src/run_topup.sh \
+# --phase ${outdir}/import/phase \
+# --acqp ${outdir}/import/dwi.params.acqp \
+# --out-dir ${outdir}
+
+# ${scripts_dir}/src/run_eddy.sh \
+# --dwi ${dwi} \
+# --bval ${bval} \
+# --bvec ${bvec} \
+# --outdir ${outdir} \
+# --acqp ${outdir}/import/dwi.params.acqp \
+# --slspec ${outdir}/import/dwi.slice_order \
+# --topup-dir ${topup_dir}
+
+# ${scripts_dir}/src/postproc.sh \
+# --dwi ${eddy_dir}/eddy_corrected.nii.gz \
+# --bval ${bval} \
+# --bvec ${eddy_dir}/eddy_corrected.eddy_rotated_bvecs \
+# --dwi-json ${dwi_json} \
+# --outdir ${outdir} \
+# --eddy-dir ${eddy_dir} \
+# --slspec ${outdir}/import/dwi.slice_order \
+# --idx ${outdir}/import/dwi.idx \
+# --acqp ${outdir}/import/dwi.params.acqp \
+# --topup-dir ${topup_dir}
+
+# xfm_tck \
+# --dwi=${preproc_dir}/dwi.nii.gz \
+# --bval=${preproc_dir}/dwi.bval \
+# --bvec=${preproc_dir}/dwi.bvec \
+# --json=${preproc_dir}/dwi.json \
+# --log=${log_dir}/tract.log \
+# --template=${template} \
+# --template-brain=${template_brain} \
+# --labels=${labels} \
+# --out-dir=${tract_dir} \
+# --frac-int=0.25 \
+# --QIT \
+# --symmetric \
+# --zero-diagonal \
+# --FA --MD --AD --RD --no-cleanup
+
+# log "END"

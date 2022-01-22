@@ -25,6 +25,8 @@ Usage(){
   Usage: 
       
       $(basename ${0}) <--options> [--options]
+  
+  Imports the dMR (diffusion magnetic resonance) image data for preprocessing.
 
   Required arguments
     -d, --dwi                       Input DWI file.
@@ -276,16 +278,19 @@ err=${log_dir}/dwi.err
 
 # Import data
 if [[ ! -d ${outdir}/import ]]; then
-  mkdir -p ${log_dir}
+  
+  log "START: Import Data"
+  run mkdir -p ${log_dir}
   run mkdir -p ${outdir}/import
 
   check_dim --dwi ${dwi} --b0 ${b0}
 
   run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
   run extract_b0 --dwi ${dwi} --bval ${bval} --bvec ${bvec} --out ${outdir}/import/sbref_pa.nii.gz
+  run fslmaths ${b0} -Tmean ${outdir}/import/sbref_ap &
 
   run imcp ${dwi} ${outdir}/import/dwi &
-  run imcp ${b0} ${outdir}/import/sbref_ap &
+  # run imcp ${b0} ${outdir}/import/sbref_ap &
   run cp ${bval} ${outdir}/import/dwi.bval
   run cp ${bvec} ${outdir}/import/dwi.bvec
 
@@ -295,12 +300,13 @@ if [[ ! -d ${outdir}/import ]]; then
   wait
 
   # Merge b0s
-  cd ${outdir}
-  fslmerge -t ${outdir}/import/phase ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
+  run cd ${outdir}
+  run fslmerge -t ${outdir}/import/phase ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
 
   # Minor clean-up
-  imrm ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
-  cd ${cwd}
+  run imrm ${outdir}/import/sbref_pa ${outdir}/import/sbref_ap
+  run cd ${cwd}
 
-  # echo "${outdir}"
+  log "END: Import Data"
+
 fi

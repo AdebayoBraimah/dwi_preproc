@@ -140,10 +140,10 @@ extract_b0(){
   run mrconvert -fslgrad ${bvec} ${bval} ${dwi} dwi.mif
 
   # Extract b0s
-  run dwiextract -bzero dwi.mif dwi.b0.nii.gz
+  run dwiextract -bzero dwi.mif dwi.b0s.nii.gz
 
   # Merge b0s
-  run fslmaths dwi.b0.nii.gz -Tmean ${out}
+  run fslmaths dwi.b0s.nii.gz -Tmean ${out}
 
   # Clean-up
   cd ${cwd}
@@ -253,6 +253,5 @@ xfm_tck(){
   local scripts_dir=$(echo $(dirname $(realpath ${0})))
   # local cmd=$(realpath ${scripts_dir}/../pkgs/xfm_tck/xfm_tck.py)
   local cmd=$(realpath ${scripts_dir}/pkgs/xfm_tck/xfm_tck.py)
-  echo "scripts_dir: ${scripts_dir}"
   run ${cmd} "${@}"
 }

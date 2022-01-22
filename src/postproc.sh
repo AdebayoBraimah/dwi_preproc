@@ -25,9 +25,20 @@ Usage(){
   Usage: 
       
       $(basename ${0}) <--options> [--options]
+  
+  Performs post-processing, which includes dMR image quality control, and the diffusion model tensor fit.
 
   Required arguments
-    -ARGS
+    -d, --dwi                       Input DWI file.
+    -b, --bval                      Corresponding bval file.
+    -e, --bvec                      Corresponding bvec file.
+    --dwi-json                      Corresponding dMRI JSON sidecar.
+    --outdir                        Output parent data directory.
+    --slspec                        Slice order specification file.
+    --acqp                          Acquisition parameter file.
+    --idx                           Slice phase encoding index file.
+    --topup-dir                     TOPUP output directory.
+    --eddy-dir                      EDDY output directory.
   
   Optional arguments
     -h, -help, --help               Prints the help menu, then exits.
@@ -69,6 +80,8 @@ err=${log_dir}/dwi.err
 cwd=${PWD}
 preproc_dir=${outdir}/preprocessed_data
 qc_dir=${outdir}/eddy.qc
+
+log "START: POST-PROCESS"
 
 if [[ ! -d ${preproc_dir} ]]; then
   run mkdir -p ${preproc_dir}
@@ -114,3 +127,4 @@ if [[ ! -d ${qc_dir} ]]; then
   -s ${slspec} \
   -v
 fi
+log "END: POST-PROCESS"

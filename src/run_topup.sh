@@ -25,11 +25,16 @@ Usage(){
   Usage: 
       
       $(basename ${0}) <--options> [--options]
+  
+  Performs dMR image distortion estimation of 4D reverse phase-encoded b0s.
 
   Required arguments
-    -ARGS
+    -p, --phase                     4D reverse phase-encoded b0s.
+    -a, --acqp                      Acquisition parameter file.
+    --out-dir                       Parent output directory.
   
   Optional arguments
+    -c, --config                    Topup configuration file.
     -h, -help, --help               Prints the help menu, then exits.
 
 USAGE
@@ -67,18 +72,12 @@ topup_dir=${outdir}/topup
 if [[ ! -d ${topup_dir} ]]; then 
   run mkdir -p ${topup_dir}
 
-  # echo "phase: ${phase}"
-  # echo "acqp: ${acqp}"
-  # echo "config: ${config}"
-  # echo "outdir: ${outdir}"
-  # echo "topup_dir: ${topup_dir}"
-
   cd ${topup_dir}
 
   run imcp ${phase} phase && phase=${PWD}/phase
   run cp ${acqp} params.acqp && acqp=params.acqp
 
-  log "RUNNING: TOPUP"
+  log "START: TOPUP"
 
   # Run topup
   run topup --imain=${phase} --datain=${acqp} --config=${config} --fout=${topup_dir}/fieldmap --iout=${topup_dir}/topup_b0s --out=${topup_dir}/topup_results -v
@@ -88,5 +87,6 @@ if [[ ! -d ${topup_dir} ]]; then
   run bet ${topup_dir}/topup_hifib0 ${topup_dir}/nodif_brain -m -f 0.25 -R
 
   cd ${cwd}
-  # echo "${topup_dir}"
+  
+  log "END: TOPUP"
 fi

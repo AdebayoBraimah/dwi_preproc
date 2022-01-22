@@ -25,9 +25,20 @@ Usage(){
   Usage: 
       
       $(basename ${0}) <--options> [--options]
+  
+  Performs eddy current correction, in addition to motion and distortion correction.
+  Additionally, slice-to-volume motion correction is also performed.
 
   Required arguments
-    -ARGS
+    -d, --dwi                       Input DWI file.
+    -b, --bval                      Corresponding bval file.
+    -e, --bvec                      Corresponding bvec file.
+    --data-dir                      Output parent data directory.
+    --slspec                        Slice order specification file.
+    --acqp                          Acquisition parameter file.
+    --idx                           Slice phase encoding index file.
+    --outdir                        Parent output directory.
+    --topup-dir                     TOPUP output directory.
   
   Optional arguments
     -h, -help, --help               Prints the help menu, then exits.
@@ -70,6 +81,8 @@ eddy_dir=${outdir}/eddy
 if [[ ! -d ${eddy_dir} ]]; then
   run mkdir -p ${eddy_dir}
 
+  log "START: EDDY"
+
   # Run eddy
   run eddy_cuda \
   --imain=${dwi} \
@@ -107,4 +120,6 @@ if [[ ! -d ${eddy_dir} ]]; then
   # Run BET on eddy output
   run extract_b0 --dwi ${dwi} --bval ${bval} --bvec ${bvec} --out ${eddy_dir}/hifib0.nii.gz
   run bet ${eddy_dir}/hifib0 ${eddy_dir}/nodif_brain -m -f 0.25 -R
+
+  log "END: EDDY"
 fi
