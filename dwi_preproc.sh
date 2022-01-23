@@ -35,7 +35,7 @@ Usage(){
     4. DTI model fitting
     5. Tractography (Single-Shell CSD)
 
-  Options marked as REPEATABLE may be specified more than once, however must all such options
+  Options marked as REPEATABLE may be specified more than once, however all such options
   must be specified the same number of times.
 
   Lastly, input data is assumed to be named in the BIDS v1.4.1+ convention, with '*_acq-' containing
