@@ -112,25 +112,27 @@ done
 #       # file=${output_dir}/sub-${sub}/b${shell}/run-${run}/eddy/hifib0.nii.gz
 #       file=${output_dir}/sub-${sub}/b${shell}/run-${run}/eddy/eddy_corrected.eddy_mbs_first_order_fields.nii.gz # Use this file to check if eddy mbs and s2v were performed
 #       eddy_dir=${output_dir}/sub-${sub}/b${shell}/run-${run}/eddy
+# 
 #       tck_aal=${output_dir}/sub-${sub}/b${shell}/run-${run}/tractography/AAL/dwi.100000.streamlines.tck
 #       tck_dhcp=${output_dir}/sub-${sub}/b${shell}/run-${run}/tractography/dHCP_40wk/dwi.100000.streamlines.tck
+#       tck_dir=${output_dir}/sub-${sub}/b${shell}/run-${run}/tractography
 # 
 #       echo "Processing: sub-${sub}"
 # 
 #       if [[ ! -f ${file} ]] && [[ -d ${eddy_dir} ]]; then
 #         # rm -rf ${eddy_dir}
 #         # echo "rm -rf ${eddy_dir}" >> test.file.sh
-#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo s2v motion correction due to GPU memory issue." >> preproc.eddy.log
+#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo s2v motion correction due to GPU memory issue." >> preproc.b${shell}.eddy.log
 #       fi
-#       if [[ -f ${tck_aal} ]]; then
-#         echo "sub-${sub} | b${shell} | run-${run}: Has AAL tractography data" >> preproc.aal_tract.log
-#       else
-#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo AAL tractography" >> preproc.no_aal_tract.log
+#       if [[ -f ${tck_aal} ]] && [[ -d ${tck_dir} ]]; then
+#         echo "sub-${sub} | b${shell} | run-${run}: Has AAL tractography data" >> preproc.b${shell}.aal_tract.log
+#       elif [[ ! -f ${tck_aal} ]] && [[ -d ${tck_dir} ]]; then
+#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo AAL tractography" >> preproc.b${shell}.no_aal_tract.log
 #       fi
-#       if [[ -f ${tck_dhcp} ]]; then
-#         echo "sub-${sub} | b${shell} | run-${run}: Has dHCP tractography data" >> preproc.dchp_tract.log
-#       else
-#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo dHCP tractography." >> preproc.no_dhcp_tract.log
+#       if [[ -f ${tck_dhcp} ]] && [[ -d ${tck_dir} ]]; then
+#         echo "sub-${sub} | b${shell} | run-${run}: Has dHCP tractography data" >> preproc.b${shell}.dchp_tract.log
+#       elif [[ ! -f ${tck_dhcp} ]] && [[ -d ${tck_dir} ]]; then
+#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo dHCP tractography." >> preproc.b${shell}.no_dhcp_tract.log
 #       fi
 #     done
 #   done
