@@ -41,6 +41,7 @@ Usage(){
     --topup-dir                     TOPUP output directory.
   
   Optional arguments
+    --mporder                       Number of discrete cosine functions used to model slice-to-volume motion [default: 8].
     -h, -help, --help               Prints the help menu, then exits.
 
 USAGE
@@ -49,6 +50,9 @@ USAGE
 
 
 # SCRIPT MAIN BODY
+
+# Set defaults
+mporder=8
 
 # Parse arguments
 [[ ${#} -eq 0 ]] && Usage;
@@ -62,6 +66,7 @@ while [[ ${#} -gt 0 ]]; do
     --acqp) shift; acqp=${1} ;;
     --outdir) shift; outdir=${1} ;;
     --topup-dir) shift; topup_dir=${1} ;;
+    --mporder) shift; mporder=${1} ;;
     -h|-help|--help) shift; Usage; ;;
     -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
     *) break ;;
@@ -105,7 +110,7 @@ if [[ ! -d ${eddy_dir} ]]; then
   --dont_mask_output \
   --slspec=${slspec} \
   --s2v_niter=10 \
-  --mporder=8 \
+  --mporder=${mporder} \
   --s2v_interp=trilinear \
   --s2v_lambda=1 \
   --topup=${topup_dir}/topup_results \

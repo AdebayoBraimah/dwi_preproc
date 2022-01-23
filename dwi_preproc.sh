@@ -61,6 +61,7 @@ Usage(){
     --dwi-json                      Corresponding dMR/DW image JSON sidecar.
     --b0-json, --sbref-json         Corresponding b0/sbref JSON sidecar.
     --idx                           Slice phase encoding index file.
+    --mporder                       Number of discrete cosine functions used to model slice-to-volume motion [default: 8].
     -h, -help, --help               Prints the help menu, then exits.
 
 USAGE
@@ -87,6 +88,9 @@ dependency_check(){
 
 # SCRIPT BODY
 
+# Set defaults
+mporder=8
+
 # Parse arguments
 [[ ${#} -eq 0 ]] && Usage;
 while [[ ${#} -gt 0 ]]; do
@@ -105,6 +109,7 @@ while [[ ${#} -gt 0 ]]; do
     --template-brain) shift; template_brains+=( ${1} ) ;;
     --labels) shift; labels+=( ${1} ) ;;
     --out-tract) shift; out_tracts+=( ${1} ) ;;
+    --mporder) shift; mporder=${1} ;;
     -h|-help|--help) shift; Usage; ;;
     -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
     *) break ;;
@@ -167,7 +172,8 @@ ${scripts_dir}/src/run_eddy.sh \
 --outdir ${outdir} \
 --acqp ${outdir}/import/dwi.params.acqp \
 --slspec ${outdir}/import/dwi.slice_order \
---topup-dir ${topup_dir}
+--topup-dir ${topup_dir} \
+--mporder ${mporder}
 
 ${scripts_dir}/src/postproc.sh \
 --dwi ${eddy_dir}/eddy_corrected.nii.gz \
