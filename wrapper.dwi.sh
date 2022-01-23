@@ -22,7 +22,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${FSLDIR}/fslpython/envs/fslpython/lib
 export PATH=${PATH}:~/bin/MRtrix/MRtrixSS3T/MRtrix3Tissue_linux/bin
 export PYTHONPATH=${PYTHONPATH}:$(which python3):$(which python2)
 
-scripts_dir=$(echo $(dirname $(realpath ${0})))
+# scripts_dir=$(echo $(dirname $(realpath ${0})))
+scripts_dir=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/code/dwi_preproc
 struct_dir=/data/AICAD-HeLab/Data_TeamShare/dHCP_work/CINEPS/t2_work/struc_processed/derivatives_corrected
 rawdata=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/rawdata
 derivatives=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/derivatives
@@ -33,6 +34,8 @@ derivatives=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/derivatives
 aal_template=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-withSkull.nii.gz)
 aal_template_brain=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-withCerebellum.nii.gz)
 aal_labels=$(realpath ../fmri_preproc/fmri_preproc_jobs/fmri_preproc/fmri_preproc/resources/atlases/UNC_infant_atlas_2020/atlas/templates/infant-neo-aal.nii.gz)
+
+mporder=8
 
 shells=( 800 2000 )
 TEs=( 88 93 )
@@ -68,9 +71,9 @@ for sub in ${subs[@]}; do
         if [[ -f ${template} ]] && [[ -f ${template_brain} ]] && [[ -f ${labels} ]]; then
           cmd="--template ${template} --template-brain ${template_brain} --labels ${labels} --out-tract dHCP_40wk"
         fi
-
-        # bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -M 20000 -W 8000 \
-        bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 20000 -W 8000 \
+        
+        # bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 25000 -W 10000 \
+        bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -M 25000 -W 10000 \
         ${scripts_dir}/dwi_preproc.sh \
         --dwi ${dwi} \
         --bval ${bval} \
@@ -80,6 +83,7 @@ for sub in ${subs[@]}; do
         --slspec ${slspec} \
         --acqp ${acqp} \
         --data-dir ${output_dir} \
+        --mporder ${mporder} \
         --template ${aal_template} --template-brain ${aal_template_brain} \
         --labels ${aal_labels} --out-tract AAL ${cmd}
         # echo "bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 20000 -W 8000 ${scripts_dir}/dwi_preproc.sh --dwi ${dwi} --bval ${bval} --bvec ${bvec} --sbref ${sbref} --dwi-json ${json} --slspec ${slspec} --acqp ${acqp} --data-dir ${output_dir} --template ${aal_template} --template-brain ${aal_template_brain} --labels ${aal_labels} --out-tract AAL ${cmd}" >> test.file.sh
@@ -89,3 +93,45 @@ for sub in ${subs[@]}; do
 done
 
 
+# #################################
+# # Clean-up (and census) code    #
+# #################################
+# 
+# derivatives=/data/AICAD-HeLab/tmp/tmp.eps/EPS/CINEPS/BIDS/derivatives
+# output_dir=${derivatives}/dwi_preproc
+# 
+# subs=( $(cd ${output_dir}; ls -d sub-* | sed "s@sub-@@g" ) )
+# shells=( 800 2000 )
+# runs=( 01 02 )
+# 
+# echo ""
+# 
+# for sub in ${subs[@]}; do
+#   for shell in ${shells[@]}; do
+#     for run in ${runs[@]}; do
+#       # file=${output_dir}/sub-${sub}/b${shell}/run-${run}/eddy/hifib0.nii.gz
+#       file=${output_dir}/sub-${sub}/b${shell}/run-${run}/eddy/eddy_corrected.eddy_mbs_first_order_fields.nii.gz # Use this file to check if eddy mbs and s2v were performed
+#       eddy_dir=${output_dir}/sub-${sub}/b${shell}/run-${run}/eddy
+#       tck_aal=${output_dir}/sub-${sub}/b${shell}/run-${run}/tractography/AAL/dwi.100000.streamlines.tck
+#       tck_dhcp=${output_dir}/sub-${sub}/b${shell}/run-${run}/tractography/dHCP_40wk/dwi.100000.streamlines.tck
+# 
+#       echo "Processing: sub-${sub}"
+# 
+#       if [[ ! -f ${file} ]] && [[ -d ${eddy_dir} ]]; then
+#         # rm -rf ${eddy_dir}
+#         # echo "rm -rf ${eddy_dir}" >> test.file.sh
+#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo s2v motion correction due to GPU memory issue." >> preproc.eddy.log
+#       fi
+#       if [[ -f ${tck_aal} ]]; then
+#         echo "sub-${sub} | b${shell} | run-${run}: Has AAL tractography data" >> preproc.aal_tract.log
+#       else
+#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo AAL tractography" >> preproc.no_aal_tract.log
+#       fi
+#       if [[ -f ${tck_dhcp} ]]; then
+#         echo "sub-${sub} | b${shell} | run-${run}: Has dHCP tractography data" >> preproc.dchp_tract.log
+#       else
+#         echo "sub-${sub} | b${shell} | run-${run}: Did not undergo dHCP tractography." >> preproc.no_dhcp_tract.log
+#       fi
+#     done
+#   done
+# done
