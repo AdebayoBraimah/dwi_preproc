@@ -69,6 +69,7 @@ err=${log_dir}/dwi.err
 # Topup output dir
 cwd=${PWD}
 topup_dir=${outdir}/topup
+
 if [[ ! -d ${topup_dir} ]]; then 
   run mkdir -p ${topup_dir}
 
@@ -89,4 +90,6 @@ if [[ ! -d ${topup_dir} ]]; then
   cd ${cwd}
   
   log "END: TOPUP"
+else
+  log "TOPUP already completed."
 fi

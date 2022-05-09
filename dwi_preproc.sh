@@ -17,7 +17,7 @@ scripts_dir=$(echo $(dirname $(realpath ${0})))
 
 #######################################
 # Prints usage to the command line interface.
-# Arguments:
+# Args:
 #   None
 #######################################
 Usage(){
@@ -74,7 +74,7 @@ USAGE
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   Dependency to check, e.g. shell command.
 # Returns
 #   0 if no errors, non-zero on error.

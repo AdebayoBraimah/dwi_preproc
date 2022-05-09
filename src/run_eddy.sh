@@ -127,4 +127,6 @@ if [[ ! -d ${eddy_dir} ]]; then
   run bet ${eddy_dir}/hifib0 ${eddy_dir}/nodif_brain -m -f 0.25 -R
 
   log "END: EDDY"
+else
+  log "EDDY already completed."
 fi

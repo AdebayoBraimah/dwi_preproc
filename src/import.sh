@@ -17,7 +17,7 @@ scripts_dir=$(echo $(dirname $(realpath ${0})))
 
 #######################################
 # Prints usage to the command line interface.
-# Arguments:
+# Args:
 #   None
 #######################################
 Usage(){
@@ -55,7 +55,7 @@ USAGE
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   dwi: Input DWI file.
 #   b0: Reversed phase encoded b0 (or single band reference).
 # Returns
@@ -96,7 +96,7 @@ check_dim(){
 # NOTE: This function assumes uniform phase-encoding
 #   for the DWI/dMRI. The output index file is just 
 #   a sequence 1's.
-# Required Arguments:
+# Required Args:
 #   dwi: Input DWI file.
 #   out-idx: Slice phase encoding index.
 # Returns
@@ -132,12 +132,12 @@ write_idx(){
 # Globals:
 #   log
 #   err
-# Required Arguments:
+# Required Args:
 #   slspec: Slice order specification file.
 #   acqp: Acquisition parameter file.
 #   out-slspec: Output filename of the slice order specification file.
 #   out-acqp: Output filename of the acquisition parameter file.
-# Optional Arguments:
+# Optional Args:
 #   idx: Slice phase encoding index.
 #   out-idx: Output filename of the slice phase encoding index.
 #   dwi: Input DWI file.
@@ -309,4 +309,6 @@ if [[ ! -d ${outdir}/import ]]; then
 
   log "END: Import Data"
 
+else
+  log "Import already completed."
 fi
