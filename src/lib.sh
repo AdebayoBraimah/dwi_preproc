@@ -14,7 +14,7 @@
 #######################################
 # Prints message to the command line interface
 #   in some arbitrary color.
-# Arguments:
+# Args:
 #   msg
 #######################################
 echo_color(){
@@ -26,7 +26,7 @@ echo_color(){
 #######################################
 # Prints message to the command line interface
 #   in red.
-# Arguments:
+# Args:
 #   msg
 #######################################
 echo_red(){
@@ -37,7 +37,7 @@ echo_red(){
 #######################################
 # Prints message to the command line interface
 #   in green.
-# Arguments:
+# Args:
 #   msg
 #######################################
 echo_green(){
@@ -48,7 +48,7 @@ echo_green(){
 #######################################
 # Prints message to the command line interface
 #   in blue.
-# Arguments:
+# Args:
 #   msg
 #######################################
 echo_blue(){
@@ -59,7 +59,7 @@ echo_blue(){
 #######################################
 # Prints message to the command line interface
 #   in red when an error is intened to be raised.
-# Arguments:
+# Args:
 #   msg
 #######################################
 exit_error(){
@@ -73,7 +73,7 @@ exit_error(){
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   Command to be logged and performed.
 #######################################
 run(){
@@ -92,7 +92,7 @@ run(){
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   Command to be logged and performed.
 #######################################
 log(){
@@ -108,7 +108,7 @@ log(){
 # Globals:
 #   log
 #   err
-# Required Arguments:
+# Required Args:
 #   d, dwi: Input DWI file.
 #   b, bval: Corresponding bval file.
 #   e, bvec: Corresponding bvec file.
@@ -156,7 +156,7 @@ extract_b0(){
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   Same arguments as N4BiasFieldCorrection.
 # Returns
 #   0 if no errors, non-zero on error.
@@ -176,7 +176,7 @@ N4(){
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   Same arguments as N4BiasFieldCorrection.
 # Returns
 #   0 if no errors, non-zero on error.
@@ -244,7 +244,7 @@ create_mask(){
 # Globals:
 #   log
 #   err
-# Arguments:
+# Args:
 #   Same arguments as xfm_tck.py
 # Returns
 #   0 if no errors, non-zero on error.
@@ -254,4 +254,37 @@ xfm_tck(){
   # local cmd=$(realpath ${scripts_dir}/../pkgs/xfm_tck/xfm_tck.py)
   local cmd=$(realpath ${scripts_dir}/pkgs/xfm_tck/xfm_tck.py)
   run ${cmd} "${@}"
+}
+
+
+#######################################
+# ``exists`` wrapper function. Checks 
+# if the input file or directory exists.
+# If the input exists (as either a file
+# or directory), then 'True' is 
+# returned/printed to the command line.
+# If the input does not exist, then 
+# 'False' is printed to the command 
+# line.
+# 
+# Globals:
+#   log
+#   err
+# Args:
+#   Input file or directory.
+# Returns
+#   True if directory/file exists, and 
+#     False otherwise
+#######################################
+exists(){
+  # Define input
+  input="${1}"
+  input=$(realpath ${input})
+
+  # Check if input exists as a file or directory
+  if [[ -f ${input} ]] || [[ -d ${input} ]]; then
+    echo "True"
+  else
+    echo "False"
+  fi
 }
