@@ -28,6 +28,9 @@ struct_dir=/data/AICAD-HeLab/Data_TeamShare/dHCP_work/CINEPS/t2_work/struc_proce
 rawdata=/data/AICAD-HeLab/Data_TeamShare/dHCP_work/EPS.BIDS/EPS/CINEPS/BIDS/rawdata
 derivatives=/data/AICAD-HeLab/Data_TeamShare/dHCP_work/EPS.BIDS/EPS/CINEPS/BIDS/derivatives
 
+_pkg=${scripts_dir}/pkgs
+dwinfo=${_pkg}/dwinfo/dwinfo.py
+
 
 # Template variables
 ## AAL
@@ -51,17 +54,47 @@ output_dir=${derivatives}/dwi_preproc
 for sub in ${subs[@]}; do
   for (( i=0; i < ${#shells[@]}; i++ )); do
     # Gather files
-    dwis=( $(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-b${shells[$i]}_dir-PA_run-*_dwi.nii.gz) )
+    dwis=( $(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-b${shells[$i]}*_dir-PA_run-*_dwi.nii.gz) )
 
     for dwi in ${dwis[@]}; do
+      sbref=""
       bval=$(remove_ext ${dwi}).bval
       bvec=$(remove_ext ${dwi}).bvec
       json=$(remove_ext ${dwi}).json
       sbref=$(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-*${TEs[$i]}_dir-*_run-01_sbref.nii.gz)
 
+      if [[ -z ${sbref} ]]; then
+        sbrefs=( $(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-*b0*_dir-*_run-*_sbref.nii.gz | sort) )
+        sbref=${sbrefs[0]}
+      fi
+
       if [[ -f ${dwi} ]] && [[ -f ${bval} ]] && [[ -f ${bvec} ]] && [[ -f ${sbref} ]]; then
         # slspec=${scripts_dir}/misc/b${shells[$i]}/*.slice_order
         # acqp=${scripts_dir}/misc/b${shells[$i]}/*.acq*
+
+        # Get parameters
+        # 
+        # NEED:
+        #   * json file
+        #   * echo-spacing
+        #   * multiband factor
+        #   * factor (divisor)
+
+        _echo_spacing=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=EchoSpacing)
+        _mb=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor)
+
+        if [[ ${_echo_spacing} == "None" ]]; then
+          _echo_spacing=0.00055
+          ${dwinfo} write-bids --bids-nifti=${dwi} --bids-label=EchoSpacing --bids-param ${_echo_spacing} 
+        fi
+
+        if [[ ${_mb} == "None" ]] && [[ ${shells[$i]} -eq 800 ]]; then
+          _mb=1
+          ${dwinfo} write-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor --bids-param ${_mb}
+        elif [[ ${_mb} == "None" ]] && [[ ${shells[$i]} -eq 2000 ]]; then
+          _mb=2
+          ${dwinfo} write-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor --bids-param ${_mb}
+        fi
 
         # Tractography test files
         ## dHCP (use single subject files)
