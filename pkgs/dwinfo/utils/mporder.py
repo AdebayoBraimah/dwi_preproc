@@ -37,7 +37,7 @@ def optimal_mporder(sliceorder: str, factor_divide: int = None) -> int:
     N: int = np.loadtxt(sliceorder).shape[0]
     mporder: int = N - 1
 
-    if factor_divide is not None:
+    if (factor_divide is not None) and (factor_divide != 0):
         mporder: int = int(N / factor_divide)
 
     return mporder
