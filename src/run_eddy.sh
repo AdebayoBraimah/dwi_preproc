@@ -41,7 +41,12 @@ Usage(){
     --topup-dir                     TOPUP output directory.
   
   Optional arguments
-    --mporder                       Number of discrete cosine functions used to model slice-to-volume motion [default: 8].
+    --mporder                       Number of discrete cosine functions used to model slice-to-volume motion.
+                                    Set this parameter to 0 to disable slice-to-volume motion correction and 
+                                    distortion correction. Otherwise, this parameter is automatically computed.
+                                    [default: automatically computed].
+    --factor                        Factor to divide the mporder by (if necessary). A factor division of 4 
+                                    is recommended. [default: 0].
     -h, -help, --help               Prints the help menu, then exits.
 
 USAGE
@@ -52,7 +57,8 @@ USAGE
 # SCRIPT MAIN BODY
 
 # Set defaults
-mporder=8
+mporder=""
+factor=0
 
 # Parse arguments
 [[ ${#} -eq 0 ]] && Usage;
@@ -62,6 +68,7 @@ while [[ ${#} -gt 0 ]]; do
     -b|--bval) shift; bval=${1} ;;
     -e|--bvec) shift; bvec=${1} ;;
     --slspec) shift; slspec=${1} ;;
+    --factor) shift; factor=${1} ;;
     --idx) shift; idx=${1} ;;
     --acqp) shift; acqp=${1} ;;
     --outdir) shift; outdir=${1} ;;
@@ -82,6 +89,11 @@ err=${log_dir}/dwi.err
 # Eddy output dir
 cwd=${PWD}
 eddy_dir=${outdir}/eddy
+
+# Compute mporder
+if [[ -z ${mporder} ]]; then
+  mporder=$(${dwinfo} mporder --bids-nifti ${dwi} --slice-order=${slspec} --factor-divide=${factor})
+fi
 
 if [[ ! -d ${eddy_dir} ]]; then
   run mkdir -p ${eddy_dir}

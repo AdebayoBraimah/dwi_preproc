@@ -39,6 +39,7 @@ Usage(){
   
   Optional arguments
     --idx                           Slice phase encoding index file.
+    -mb, --multiband-factor         Multiband acceleration factor.
     --dwi-json                      DWI/dMRI JSON sidecar.
     --b0-json                       b0 JSON sidecar.
     -h, -help, --help               Prints the help menu, then exits.
@@ -198,11 +199,13 @@ while [[ ${#} -gt 0 ]]; do
     -e|--bvec) shift; bvec=${1} ;;
     -b0|--b0) shift; b0=${1} ;;
     --slspec) shift; slspec=${1} ;;
+    -mb|--multiband-factor) shift; mb=${1} ;;
     --idx) shift; idx=${1} ;;
     --acqp) shift; acqp=${1} ;;
     --dwi-json) shift; dwi_json=${1} ;;
     --b0-json) shift; b0_json=${1} ;;
     --data-dir) shift; data_dir=${1} ;;
+    --echo-spacing) shift; echo_spacing=${1} ;;
     -h|-help|--help) shift; Usage; ;;
     -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
     *) break ;;
@@ -285,6 +288,35 @@ if [[ ! -d ${outdir}/import ]]; then
 
   check_dim --dwi ${dwi} --b0 ${b0}
 
+  # Temporary directory (variable)
+  tmp_dir=${outdir}/import/tmp_dir_${RANDOM}
+
+  # Check if acqp file was passed
+  if [[ -z ${acqp} ]] || [[ ! -f ${acqp} ]]; then
+    [[ ! -d ${tmp_dir} ]] && run mkdir -p ${tmp_dir}
+
+    if [[ -z ${echo_spacing} ]]; then
+      _echo_spacing=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=EchoSpacing)
+      echo_spacing=$(python -c "print(float('${_echo_spacing}')*100)")
+    fi
+    
+    acqp=${tmp_dir}/params.acqp
+
+    echo "0 1 0 ${echo_spacing}" > ${acqp}
+    echo "0 -1 0 ${echo_spacing}" >> ${acqp}
+  fi
+
+  # Check if slice specification order file was passed
+  if [[ -z ${slspec} ]] || [[ ! -f ${slspec} ]]; then
+
+    [[ ! -d ${tmp_dir} ]] && run mkdir -p ${tmp_dir}
+    [[ -z ${mb} ]] && mb=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor)
+
+    slspec=${tmp_dir}/dwi.slice.order.txt
+    
+    ${dwinfo} sliceorder --bids-nifti=${dwi} --mb-factor=${mb} --output=${slspec} --interleaved
+  fi
+
   run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
   run extract_b0 --dwi ${dwi} --bval ${bval} --bvec ${bvec} --out ${outdir}/import/sbref_pa.nii.gz
   run fslmaths ${b0} -Tmean ${outdir}/import/sbref_ap &
@@ -296,6 +328,8 @@ if [[ ! -d ${outdir}/import ]]; then
 
   [[ ! -z ${dwi_json} ]] && run cp ${dwi_json} ${outdir}/import/dwi.json
   [[ ! -z ${b0_json} ]] && run cp ${b0_json} ${outdir}/import/phase.json
+
+  rm -rf ${tmp_dir} & 
 
   wait
 

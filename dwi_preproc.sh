@@ -60,8 +60,17 @@ Usage(){
   Optional arguments
     --dwi-json                      Corresponding dMR/DW image JSON sidecar.
     --b0-json, --sbref-json         Corresponding b0/sbref JSON sidecar.
+    --echo-spacing                  Echo-spacing parameter for the parameter acquisition file [default: 0.05].
+    -mb, --multiband-factor         Multiband acceleration factor. NOTE: If this parameter is provided then 
+                                    '--slspec' does not need to be specified. Additionally, this parameter can 
+                                    also be specified via a JSON (sidecar) file.
     --idx                           Slice phase encoding index file.
-    --mporder                       Number of discrete cosine functions used to model slice-to-volume motion [default: 8].
+    --mporder                       Number of discrete cosine functions used to model slice-to-volume motion.
+                                    Set this parameter to 0 to disable slice-to-volume motion correction and 
+                                    distortion correction. Otherwise, this parameter is automatically computed.
+                                    [default: automatically computed].
+    --factor                        Factor to divide the mporder by (if necessary). A factor division of 4 
+                                    is recommended. [default: 0].
     -h, -help, --help               Prints the help menu, then exits.
 
 USAGE
@@ -89,7 +98,10 @@ dependency_check(){
 # SCRIPT BODY
 
 # Set defaults
-mporder=8
+mporder=""
+mb=""
+echo_spacing=0.05
+factor=0
 
 # Parse arguments
 [[ ${#} -eq 0 ]] && Usage;
@@ -100,6 +112,7 @@ while [[ ${#} -gt 0 ]]; do
     -e|--bvec) shift; bvec=${1} ;;
     -b0|--b0|--sbref) shift; sbref=${1} ;;
     --slspec) shift; slspec=${1} ;;
+    -mb|--multiband-factor) shift; mb=${1} ;;
     --idx) shift; idx=${1} ;;
     --acqp) shift; acqp=${1} ;;
     --dwi-json) shift; dwi_json=${1} ;;
@@ -110,6 +123,8 @@ while [[ ${#} -gt 0 ]]; do
     --labels) shift; labels+=( ${1} ) ;;
     --out-tract) shift; out_tracts+=( ${1} ) ;;
     --mporder) shift; mporder=${1} ;;
+    --echo-spacing) shift; echo_spacing=${1} ;;
+    --factor) shift; factor=${1} ;;
     -h|-help|--help) shift; Usage; ;;
     -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
     *) break ;;
@@ -158,7 +173,9 @@ ${scripts_dir}/src/import.sh \
 --acqp ${acqp} \
 --slspec ${slspec} \
 --dwi-json ${dwi_json} \
---b0-json ${sbref_json}
+--b0-json ${sbref_json} \
+--multiband-factor ${mb} \
+--echo-spacing ${echo_spacing}
 
 ${scripts_dir}/src/run_topup.sh \
 --phase ${outdir}/import/phase \
@@ -173,7 +190,8 @@ ${scripts_dir}/src/run_eddy.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --slspec ${outdir}/import/dwi.slice_order \
 --topup-dir ${topup_dir} \
---mporder ${mporder}
+--mporder ${mporder} \
+--factor ${factor}
 
 ${scripts_dir}/src/postproc.sh \
 --dwi ${eddy_dir}/eddy_corrected.nii.gz \
