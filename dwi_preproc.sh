@@ -202,7 +202,7 @@ for (( i=0; i < ${#templates[@]}; i++)); do
   --QIT \
   --symmetric \
   --zero-diagonal \
-  --FA --MD --AD --RD --no-cleanup
+  --FA --MD --AD --RD # --no-cleanup
 done
 
 log "END: dMRI Preprocessing"
