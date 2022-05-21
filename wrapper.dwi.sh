@@ -44,7 +44,7 @@ mporder=""
 shells=( 800 2000 )
 TEs=( 88 93 )
 subs=( $(cd ${rawdata}; ls -d sub-* | sed "s@sub-@@g" ) )
-factors=( 4 8 )
+factors=( 8 4 )
 
 # output_dir=${scripts_dir}/test_data/test_proc
 # rm -rf ${output_dir}
@@ -58,6 +58,7 @@ for sub in ${subs[@]}; do
 
     for dwi in ${dwis[@]}; do
       sbref=""
+      factor=""
       bval=$(remove_ext ${dwi}).bval
       bvec=$(remove_ext ${dwi}).bvec
       json=$(remove_ext ${dwi}).json
@@ -73,27 +74,29 @@ for sub in ${subs[@]}; do
         # acqp=${scripts_dir}/misc/b${shells[$i]}/*.acq*
 
         # Get parameters
-        # 
-        # NEED:
-        #   * json file
-        #   * echo-spacing
-        #   * multiband factor
-        #   * factor (divisor)
-
         _echo_spacing=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=EchoSpacing)
         _mb=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor)
 
         if [[ ${_echo_spacing} == "None" ]]; then
+          echo "sub-${sub} | Writing EchoSpacing to ${dwi}" >> ${scripts_dir}/wrapper.script.log
           _echo_spacing=0.00055
           ${dwinfo} write-bids --bids-nifti=${dwi} --bids-label=EchoSpacing --bids-param ${_echo_spacing} 
         fi
 
         if [[ ${_mb} == "None" ]] && [[ ${shells[$i]} -eq 800 ]]; then
+          echo "sub-${sub} | Writing MultibandAccelerationFactor to ${dwi}" >> ${scripts_dir}/wrapper.script.log
           _mb=1
           ${dwinfo} write-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor --bids-param ${_mb}
         elif [[ ${_mb} == "None" ]] && [[ ${shells[$i]} -eq 2000 ]]; then
+          echo "sub-${sub} | Writing MultibandAccelerationFactor to ${dwi}" >> ${scripts_dir}/wrapper.script.log
           _mb=2
           ${dwinfo} write-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor --bids-param ${_mb}
+        fi
+
+        if [[ ${shells[$i]} -eq 800 ]]; then
+          factor=${factors[0]}
+        elif [[ ${shells[$i]} -eq 2000 ]]; then
+          factor=${factors[1]}
         fi
 
         # Tractography test files
@@ -117,6 +120,7 @@ for sub in ${subs[@]}; do
         --dwi-json ${json} \
         --data-dir ${output_dir} \
         --mporder ${mporder} \
+        --factor ${factor} \
         --template ${aal_template} --template-brain ${aal_template_brain} \
         --labels ${aal_labels} --out-tract AAL ${cmd}
         # --slspec ${slspec} \

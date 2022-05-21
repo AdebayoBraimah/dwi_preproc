@@ -102,6 +102,8 @@ mporder=""
 mb=""
 echo_spacing=0.05
 factor=0
+b0_json=""
+slspec=""
 
 # Parse arguments
 [[ ${#} -eq 0 ]] && Usage;
@@ -173,9 +175,9 @@ ${scripts_dir}/src/import.sh \
 --acqp ${acqp} \
 --slspec ${slspec} \
 --dwi-json ${dwi_json} \
---b0-json ${sbref_json} \
 --multiband-factor ${mb} \
---echo-spacing ${echo_spacing}
+--echo-spacing ${echo_spacing} \
+--b0-json ${b0_json}
 
 ${scripts_dir}/src/run_topup.sh \
 --phase ${outdir}/import/phase \
