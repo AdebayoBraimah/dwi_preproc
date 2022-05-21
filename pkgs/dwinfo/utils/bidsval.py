@@ -36,19 +36,19 @@ def write_bids_val(
         Output JSON file.
     """
     if not isinstance(bids_label, list):
-        bids_labels: List[str] = [bids_label]
+        bids_label: List[str] = [bids_label]
 
     if not isinstance(bids_param, list):
-        bids_params: List[Any] = [bids_param]
+        bids_param: List[Any] = [bids_param]
 
     # Check if arrays/lists are of same length
-    if len(bids_labels) != len(bids_params):
+    if len(bids_label) != len(bids_param):
         raise IndexError(
             "Inputs for 'bids_label' and 'bids_param' are of different lengths."
         )
 
     # Check if input labels are BIDS compliant
-    for label in bids_labels:
+    for label in bids_label:
         if not is_camel_case(s=label, pascal_case=True):
             raise BIDSNameError(
                 f"Input metadata field {label} is not BIDS compliant"
@@ -57,7 +57,7 @@ def write_bids_val(
     # Construct dictionary/hashmap of key-value terms
     json_dict: Dict[str, Any] = {}
 
-    for label, param in zip(bids_labels, bids_params):
+    for label, param in zip(bids_label, bids_param):
         try:
             param: Union[int, float] = literal_eval(param)
         except ValueError:
