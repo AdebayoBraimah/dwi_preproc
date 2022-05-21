@@ -14,7 +14,7 @@
 
 # Load modules
 module load anaconda3/1.0.0
-module load fsl/6.0.4
+module load fsl/6.0.5
 module load cuda/9.1
 
 # Append/modify PATH variable
@@ -64,7 +64,7 @@ for sub in ${subs[@]}; do
       json=$(remove_ext ${dwi}).json
       sbref=$(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-*${TEs[$i]}_dir-*_run-01_sbref.nii.gz)
 
-      if [[ -z ${sbref} ]]; then
+      if [[ ! -f ${sbref} ]]; then
         sbrefs=( $(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-*b0*_dir-*_run-*_sbref.nii.gz | sort) )
         sbref=${sbrefs[0]}
       fi

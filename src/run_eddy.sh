@@ -14,6 +14,7 @@ scripts_dir=$(echo $(dirname $(realpath ${0})))
 
 # SOURCE LOGGING FUNCTIONS
 . ${scripts_dir}/lib.sh
+dwinfo=$(realpath ${scripts_dir}/../pkgs/dwinfo/dwinfo.py)
 
 #######################################
 # Prints usage to the command line interface.
@@ -92,7 +93,7 @@ eddy_dir=${outdir}/eddy
 
 # Compute mporder
 if [[ -z ${mporder} ]]; then
-  mporder=$(dwinfo mporder --bids-nifti ${dwi} --slice-order=${slspec} --factor-divide=${factor})
+  mporder=$(${dwinfo} mporder --bids-nifti ${dwi} --slice-order=${slspec} --factor-divide=${factor})
 fi
 
 if [[ ! -d ${eddy_dir} ]]; then

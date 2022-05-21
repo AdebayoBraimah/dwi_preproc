@@ -272,7 +272,7 @@ xfm_tck(){
 #######################################
 dwinfo(){
   local scripts_dir=$(echo $(dirname $(realpath ${0})))
-  local cmd=$(realpath ${scripts_dir}/pkgs/dwinfo/dwinfo.py)
+  local cmd=$(realpath ${scripts_dir}/../pkgs/dwinfo/dwinfo.py)
   run ${cmd} "${@}"
 }
 

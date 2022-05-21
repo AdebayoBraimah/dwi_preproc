@@ -174,10 +174,10 @@ ${scripts_dir}/src/import.sh \
 --data-dir ${data_dir} \
 --acqp ${acqp} \
 --slspec ${slspec} \
---dwi-json ${dwi_json} \
---multiband-factor ${mb} \
---echo-spacing ${echo_spacing} \
---b0-json ${b0_json}
+--dwi-json ${dwi_json}
+# --multiband-factor ${mb} \
+# --echo-spacing ${echo_spacing} \
+# --b0-json ${b0_json}
 
 ${scripts_dir}/src/run_topup.sh \
 --phase ${outdir}/import/phase \

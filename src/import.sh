@@ -14,6 +14,7 @@ scripts_dir=$(echo $(dirname $(realpath ${0})))
 
 # SOURCE LOGGING FUNCTIONS
 . ${scripts_dir}/lib.sh
+dwinfo=$(realpath ${scripts_dir}/../pkgs/dwinfo/dwinfo.py)
 
 #######################################
 # Prints usage to the command line interface.
@@ -296,7 +297,7 @@ if [[ ! -d ${outdir}/import ]]; then
     [[ ! -d ${tmp_dir} ]] && run mkdir -p ${tmp_dir}
 
     if [[ -z ${echo_spacing} ]]; then
-      _echo_spacing=$(dwinfo read-bids --bids-nifti=${dwi} --bids-label=EchoSpacing)
+      _echo_spacing=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=EchoSpacing)
       echo_spacing=$(python -c "print(float('${_echo_spacing}')*100)")
     fi
     
@@ -310,11 +311,11 @@ if [[ ! -d ${outdir}/import ]]; then
   if [[ -z ${slspec} ]] || [[ ! -f ${slspec} ]]; then
 
     [[ ! -d ${tmp_dir} ]] && run mkdir -p ${tmp_dir}
-    [[ -z ${mb} ]] && mb=$(dwinfo read-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor)
+    [[ -z ${mb} ]] && mb=$(${dwinfo} read-bids --bids-nifti=${dwi} --bids-label=MultibandAccelerationFactor)
 
     slspec=${tmp_dir}/dwi.slice.order.txt
     
-    dwinfo sliceorder --bids-nifti=${dwi} --mb-factor=${mb} --output=${slspec} --interleaved
+    ${dwinfo} sliceorder --bids-nifti=${dwi} --mb-factor=${mb} --output=${slspec} --interleaved
   fi
 
   run import_info --out-slspec ${outdir}/import/dwi.slice_order --out-acqp ${outdir}/import/dwi.params.acqp --dwi ${dwi} --out-idx ${outdir}/import/dwi.idx --slspec ${slspec} --idx ${idx} --acqp ${acqp}
