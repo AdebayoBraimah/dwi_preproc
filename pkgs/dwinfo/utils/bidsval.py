@@ -17,7 +17,10 @@ def write_bids_val(
     out_json: str,
     json_file: Optional[str] = None,
 ) -> str:
-    """Writes BIDS values associated with some BIDS key to a JSON file.
+    """Writes/appends BIDS values associated with some BIDS key to a JSON file.
+
+    NOTE:
+        Existing BIDS labels/parameters are overwritten if they exist.
 
     Args:
         bids_label: BIDS label.
@@ -62,6 +65,7 @@ def write_bids_val(
         tmp_dict: Dict[str, Any] = {label: param}
         json_dict.update(tmp_dict)
 
+    # Append to input JSON file if provided
     if json_file is not None:
         json_file: str = os.path.abspath(json_file)
         json_data: Dict[str, Any] = read_json(json_file=json_file)
