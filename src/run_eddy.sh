@@ -92,7 +92,7 @@ eddy_dir=${outdir}/eddy
 
 # Compute mporder
 if [[ -z ${mporder} ]]; then
-  mporder=$(${dwinfo} mporder --bids-nifti ${dwi} --slice-order=${slspec} --factor-divide=${factor})
+  mporder=$(dwinfo mporder --bids-nifti ${dwi} --slice-order=${slspec} --factor-divide=${factor})
 fi
 
 if [[ ! -d ${eddy_dir} ]]; then
