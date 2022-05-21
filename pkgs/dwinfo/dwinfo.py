@@ -35,8 +35,6 @@ def dwinfo() -> None:
     else:
         args: Dict[str, Any] = vars(args)
 
-    print(args)
-
     # Check this method first as NIFTI/JSON files are
     #   not required.
     if args.get('method') == 'mporder':
@@ -56,11 +54,15 @@ def dwinfo() -> None:
         json_file: str = f"{remove_ext(image)}.json"
     else:
         print(
-            "\nREQUIRED: '--bids-nifti and/or '--bids-json' if the corresponding JSON file share the same filename.'"
+            "\nREQUIRED: '--bids-nifti' and/or '--bids-json' if the corresponding JSON file share the same filename. See '--help' menu for details.\n"
         )
+        parser.print_help()
+        sys.exit(1)
 
     if not args.get('out_json'):
         out_json: str = json_file
+    else:
+        out_json: str = args.get('out_json')
 
     if (
         args.get('mode_default')
@@ -75,6 +77,8 @@ def dwinfo() -> None:
         mode: str = "single-shot"
     elif args.get('mode_default'):
         mode: str = "default"
+    else:
+        mode: str = "interleaved"
 
     if args.get('method') == 'sliceorder':
         _: str = write_slice_order(
