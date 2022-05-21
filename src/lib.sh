@@ -258,6 +258,26 @@ xfm_tck(){
 
 
 #######################################
+# dwinfo wrapper function for the 
+# python CLI. CLI options
+# are the same as the referenced command
+# line tool.
+# Globals:
+#   log
+#   err
+# Args:
+#   Same arguments as dwinfo.py
+# Returns
+#   0 if no errors, non-zero on error.
+#######################################
+dwinfo(){
+  local scripts_dir=$(echo $(dirname $(realpath ${0})))
+  local cmd=$(realpath ${scripts_dir}/pkgs/dwinfo/dwinfo.py)
+  run ${cmd} "${@}"
+}
+
+
+#######################################
 # ``exists`` wrapper function. Checks 
 # if the input file or directory exists.
 # If the input exists (as either a file
