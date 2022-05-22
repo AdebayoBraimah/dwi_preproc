@@ -186,8 +186,6 @@ ${scripts_dir}/src/run_topup.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --out-dir ${outdir}
 
-echo "factor: ${factor}"
-
 ${scripts_dir}/src/run_eddy.sh \
 --dwi ${dwi} \
 --bval ${bval} \
