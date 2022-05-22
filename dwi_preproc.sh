@@ -211,8 +211,8 @@ ${scripts_dir}/src/postproc.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --topup-dir ${topup_dir}
 
-DISREGARD_CONDITIONS=0
-# DISREGARD_CONDITIONS=1
+# DISREGARD_CONDITIONS=0
+DISREGARD_CONDITIONS=1
 
 for (( i=0; i < ${#templates[@]}; i++)); do
 
