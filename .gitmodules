@@ -1,6 +1,4 @@
-[submodule "xfm_tck"]
-	path = xfm_tck
-	url = https://github.com/AdebayoBraimah/xfm_tck.git
 [submodule "pkgs/xfm_tck"]
 	path = pkgs/xfm_tck
 	url = https://github.com/AdebayoBraimah/xfm_tck.git
+	branch = v0.0.1
