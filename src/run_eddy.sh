@@ -91,6 +91,8 @@ err=${log_dir}/dwi.err
 cwd=${PWD}
 eddy_dir=${outdir}/eddy
 
+# bsub -q gpu-v100 -gpu "num=1" -M 1000 -W 500 -n 1 -J "bash" -R "span[hosts=1]" -Is bash
+
 # Compute mporder
 if [[ -z ${mporder} ]]; then
   mporder=$(${dwinfo} mporder --bids-nifti ${dwi} --slice-order=${slspec} --factor-divide=${factor})

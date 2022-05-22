@@ -14,6 +14,7 @@ scripts_dir=$(echo $(dirname $(realpath ${0})))
 
 # SOURCE LOGGING FUNCTIONS
 . ${scripts_dir}/src/lib.sh
+xfm_tck=$(realpath ${scripts_dir}/pkgs/xfm_tck/xfm_tck.py)
 
 #######################################
 # Prints usage to the command line interface.
@@ -104,6 +105,7 @@ echo_spacing=0.05
 factor=0
 b0_json=""
 slspec=""
+acqp=""
 
 # Parse arguments
 [[ ${#} -eq 0 ]] && Usage;
@@ -113,6 +115,7 @@ while [[ ${#} -gt 0 ]]; do
     -b|--bval) shift; bval=${1} ;;
     -e|--bvec) shift; bvec=${1} ;;
     -b0|--b0|--sbref) shift; sbref=${1} ;;
+    --factor) shift; factor=${1} ;;
     --slspec) shift; slspec=${1} ;;
     -mb|--multiband-factor) shift; mb=${1} ;;
     --idx) shift; idx=${1} ;;
@@ -126,7 +129,6 @@ while [[ ${#} -gt 0 ]]; do
     --out-tract) shift; out_tracts+=( ${1} ) ;;
     --mporder) shift; mporder=${1} ;;
     --echo-spacing) shift; echo_spacing=${1} ;;
-    --factor) shift; factor=${1} ;;
     -h|-help|--help) shift; Usage; ;;
     -*) echo_red "$(basename ${0}): Unrecognized option ${1}" >&2; Usage; ;;
     *) break ;;
@@ -172,9 +174,9 @@ ${scripts_dir}/src/import.sh \
 --bval ${bval} \
 --bvec ${bvec} \
 --data-dir ${data_dir} \
---acqp ${acqp} \
---slspec ${slspec} \
 --dwi-json ${dwi_json}
+# --slspec ${slspec} \
+# --acqp ${acqp} \
 # --multiband-factor ${mb} \
 # --echo-spacing ${echo_spacing} \
 # --b0-json ${b0_json}
@@ -184,6 +186,8 @@ ${scripts_dir}/src/run_topup.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --out-dir ${outdir}
 
+echo "factor: ${factor}"
+
 ${scripts_dir}/src/run_eddy.sh \
 --dwi ${dwi} \
 --bval ${bval} \
@@ -192,8 +196,8 @@ ${scripts_dir}/src/run_eddy.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --slspec ${outdir}/import/dwi.slice_order \
 --topup-dir ${topup_dir} \
---mporder ${mporder} \
 --factor ${factor}
+# --mporder ${mporder} \
 
 ${scripts_dir}/src/postproc.sh \
 --dwi ${eddy_dir}/eddy_corrected.nii.gz \
@@ -207,22 +211,29 @@ ${scripts_dir}/src/postproc.sh \
 --acqp ${outdir}/import/dwi.params.acqp \
 --topup-dir ${topup_dir}
 
+DISREGARD_CONDITIONS=0
+# DISREGARD_CONDITIONS=1
+
 for (( i=0; i < ${#templates[@]}; i++)); do
-  xfm_tck \
-  --dwi=${preproc_dir}/dwi.nii.gz \
-  --bval=${preproc_dir}/dwi.bval \
-  --bvec=${preproc_dir}/dwi.bvec \
-  --json=${preproc_dir}/dwi.json \
-  --log=${log_dir}/tract.log \
-  --template=${templates[$i]} \
-  --template-brain=${template_brains[$i]} \
-  --labels=${labels[$i]} \
-  --out-dir=${outdir}/tractography/${out_tracts[$i]} \
-  --frac-int=0.25 \
-  --QIT \
-  --symmetric \
-  --zero-diagonal \
-  --FA --MD --AD --RD # --no-cleanup
+
+  if [[ ! -d ${outdir}/tractography/${out_tracts[$i]} ]] || [[ ${DISREGARD_CONDITIONS} -eq 1 ]]; then
+    # xfm_tck \
+    ${xfm_tck} \
+    --dwi=${preproc_dir}/dwi.nii.gz \
+    --bval=${preproc_dir}/dwi.bval \
+    --bvec=${preproc_dir}/dwi.bvec \
+    --json=${preproc_dir}/dwi.json \
+    --log=${log_dir}/tract.log \
+    --template=${templates[$i]} \
+    --template-brain=${template_brains[$i]} \
+    --labels=${labels[$i]} \
+    --out-dir=${outdir}/tractography/${out_tracts[$i]} \
+    --frac-int=0.25 \
+    --QIT \
+    --symmetric \
+    --zero-diagonal \
+    --FA --MD --AD --RD # --no-cleanup
+  fi
 done
 
 log "END: dMRI Preprocessing"

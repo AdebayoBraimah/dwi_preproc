@@ -119,10 +119,10 @@ for sub in ${subs[@]}; do
         --sbref ${sbref} \
         --dwi-json ${json} \
         --data-dir ${output_dir} \
-        --mporder ${mporder} \
         --factor ${factor} \
         --template ${aal_template} --template-brain ${aal_template_brain} \
         --labels ${aal_labels} --out-tract AAL ${cmd}
+        # --mporder ${mporder} \
         # --slspec ${slspec} \
         # --acqp ${acqp} \
         # echo "bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 20000 -W 8000 ${scripts_dir}/dwi_preproc.sh --dwi ${dwi} --bval ${bval} --bvec ${bvec} --sbref ${sbref} --dwi-json ${json} --slspec ${slspec} --acqp ${acqp} --data-dir ${output_dir} --template ${aal_template} --template-brain ${aal_template_brain} --labels ${aal_labels} --out-tract AAL ${cmd}" >> test.file.sh

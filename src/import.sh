@@ -214,6 +214,7 @@ while [[ ${#} -gt 0 ]]; do
   shift
 done
 
+
 # variable info
 sub_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $1}' | sed "s@sub-@@g")
 run_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
