@@ -109,23 +109,37 @@ for sub in ${subs[@]}; do
         if [[ -f ${template} ]] && [[ -f ${template_brain} ]] && [[ -f ${labels} ]]; then
           cmd="--template ${template} --template-brain ${template_brain} --labels ${labels} --out-tract dHCP_40wk"
         fi
+
+
+        # variable info
+        sub_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $1}' | sed "s@sub-@@g")
+        run_id=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $4}' | sed "s@run-@@g")
+        dwi_PE=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
+        bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
+
+        outdir=${data_dir}/sub-${sub_id}/${bshell}/run-${run_id}
+        outfile=${outdir}/tractography/AAL/dwi.100000.streamlines.tck
         
-        # bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -M 25000 -W 10000 \
-        bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 25000 -W 10000 \
-        ${scripts_dir}/dwi_preproc.sh \
-        --dwi ${dwi} \
-        --bval ${bval} \
-        --bvec ${bvec} \
-        --sbref ${sbref} \
-        --dwi-json ${json} \
-        --data-dir ${output_dir} \
-        --factor ${factor} \
-        --template ${aal_template} --template-brain ${aal_template_brain} \
-        --labels ${aal_labels} --out-tract AAL ${cmd}
-        # --mporder ${mporder} \
-        # --slspec ${slspec} \
-        # --acqp ${acqp} \
-        # echo "bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 20000 -W 8000 ${scripts_dir}/dwi_preproc.sh --dwi ${dwi} --bval ${bval} --bvec ${bvec} --sbref ${sbref} --dwi-json ${json} --slspec ${slspec} --acqp ${acqp} --data-dir ${output_dir} --template ${aal_template} --template-brain ${aal_template_brain} --labels ${aal_labels} --out-tract AAL ${cmd}" >> test.file.sh
+        if [[ ! -f ${outfile} ]]; then
+          # bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -M 25000 -W 10000 \
+          bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 25000 -W 10000 \
+          ${scripts_dir}/dwi_preproc.sh \
+          --dwi ${dwi} \
+          --bval ${bval} \
+          --bvec ${bvec} \
+          --sbref ${sbref} \
+          --dwi-json ${json} \
+          --data-dir ${output_dir} \
+          --factor ${factor} \
+          --template ${aal_template} --template-brain ${aal_template_brain} \
+          --labels ${aal_labels} --out-tract AAL ${cmd}
+          # --mporder ${mporder} \
+          # --slspec ${slspec} \
+          # --acqp ${acqp} \
+          # echo "bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 20000 -W 8000 ${scripts_dir}/dwi_preproc.sh --dwi ${dwi} --bval ${bval} --bvec ${bvec} --sbref ${sbref} --dwi-json ${json} --slspec ${slspec} --acqp ${acqp} --data-dir ${output_dir} --template ${aal_template} --template-brain ${aal_template_brain} --labels ${aal_labels} --out-tract AAL ${cmd}" >> test.file.sh
+        else
+          echo "sub-${sub} | b${bshell} | run-${run_id}: Has already been completed."
+        fi
       fi
     done
   done
