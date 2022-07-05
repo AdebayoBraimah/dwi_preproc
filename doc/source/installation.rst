@@ -11,7 +11,7 @@ External dependencies
 The required external dependencies.
 
 * `FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSL>`_
-* N4BiasFieldCorrection (installable via `ANTs <http://stnava.github.io/ANTs/>`_)
+* ``N4BiasFieldCorrection`` (installable via `ANTs <http://stnava.github.io/ANTs/>`_)
 
 |
 
