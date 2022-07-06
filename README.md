@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/dwi-preproc/badge/?version=latest)](https://dwi-preproc.readthedocs.io/en/latest/?badge=latest)
+
 # ``dwi_preproc``  
 
 Preprocesses (neonatal) dMRI data using key steps from the dHCP neonatal dMRI preprocessing pipeline. 
