@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8  -*-
 # 
+# BSUB -n 1
+# BSUB -R "span[hosts=1]"
+# BSUB -M 3000
+# BSUB -W 500
+# BSUB -o DWI_wrapper.log
+# BSUB -e DWI_wrapper.err
+# BSUB -J "DWI_wrapper"
+
 # DESCRIPTION:
 # 
 # 
@@ -67,6 +75,7 @@ for sub in ${subs[@]}; do
       if [[ ! -f ${sbref} ]]; then
         sbrefs=( $(realpath ${rawdata}/sub-${sub}/dwi/sub-*_acq-*b0*_dir-*_run-*_sbref.nii.gz | sort) )
         sbref=${sbrefs[0]}
+        # sbref=${sbrefs[1]}
       fi
 
       if [[ -f ${dwi} ]] && [[ -f ${bval} ]] && [[ -f ${bvec} ]] && [[ -f ${sbref} ]]; then
@@ -117,10 +126,14 @@ for sub in ${subs[@]}; do
         dwi_PE=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $3}' | sed "s@dir-@@g")
         bshell=$(echo $(remove_ext $(basename ${dwi})) | sed "s@_@ @g" | awk '{print $2}' | sed "s@acq-@@g")
 
-        outdir=${data_dir}/sub-${sub_id}/${bshell}/run-${run_id}
-        outfile=${outdir}/tractography/AAL/dwi.100000.streamlines.tck
+        outdir=${output_dir}/sub-${sub_id}/${bshell}/run-${run_id}
+        # outfile=${outdir}/tractography/AAL/dwi.100000.streamlines.tck
+        outfile=${outdir}/preprocessed_data/dwi.nii.gz
         
         if [[ ! -f ${outfile} ]]; then
+          rm -rf ${outdir}
+          # rm -rf ${outdir}/eddy ${outdir}/preprocessed_data
+          
           # bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -M 25000 -W 10000 \
           bsub -J ${sub}_${shells[$i]} -n 1 -R "span[hosts=1]" -q gpu-v100 -gpu "num=1" -M 25000 -W 10000 \
           ${scripts_dir}/dwi_preproc.sh \
