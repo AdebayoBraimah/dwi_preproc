@@ -1,0 +1,16 @@
+{
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": false,
+    "esbonio.sphinx.confDir": "",
+    "python.formatting.blackArgs": [
+        "--line-length",
+        "79",
+        "--skip-string-normalization"
+    ],
+    "python.formatting.provider": "black",
+    "editor.rulers": [
+        79,
+        87
+    ]
+}
