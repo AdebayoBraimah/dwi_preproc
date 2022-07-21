@@ -1,3 +1,4 @@
 # misc.info/*
 # preproc.wrapper.sh
-mk.qc.images/dwi.preproc.qc*
+.env/*
+.vscode/*.log
