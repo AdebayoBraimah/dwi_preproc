@@ -1,1 +1,0 @@
-sub-C03_bval-b2000_run-01 does not have any QC information
