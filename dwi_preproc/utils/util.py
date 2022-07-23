@@ -3,9 +3,11 @@
 import os
 import json
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
-def read_json(json_file: str) -> Dict[str, Any]:
+from commandio.fileio import file
+
+def read_json(json_file: Union[str,file]) -> Dict[str, Any]:
     """Reads JavaScript Object Notation (JSON) file into a dictionary.
     
     Args:
@@ -32,7 +34,7 @@ def read_json(json_file: str) -> Dict[str, Any]:
         return dict()
 
 
-def update_json(json_file: str, dictionary: Dict[str, Any]) -> str:
+def update_json(json_file: Union[str,file], dictionary: Dict[str, Any]) -> str:
     """Updates JavaScript Object Notation (JSON) file. 
     
     If the file does not exist, it is created once this function is called.

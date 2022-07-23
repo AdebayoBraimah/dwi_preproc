@@ -5,9 +5,10 @@ from warnings import warn_explicit
 
 from typing import Dict, Union, Set
 
-from commandio.fileio import File
+from commandio.fileio import File, file
 
 from dwi_preproc.utils.util import read_json
+from dwi_preproc.utils.niio import NiiFile, image
 
 class BIDSInfo():
     """Class for parsing BIDS filenames and storing the relevant information."""
@@ -28,22 +29,22 @@ class BIDSInfo():
     bvec: str = None
     json: str = None
 
-    def __init__(self, file: str, exist: bool = False) -> None:
+    def __init__(self, img: Union[file, str], exist: bool = False) -> None:
         """Class for parsing BIDS filenames and storing the relevant information.
 
         Args:
-            file: Input BIDS file.
+            img: Input BIDS image file.
             exist: Check if input file exists. Defaults to False.
         """
-        file: str = os.path.abspath(file)
+        img: image = os.path.abspath(img)
         
-        with File(src=file, assert_exists=True) as f:
+        with NiiFile(src=img, assert_exists=True, validate_nifti=True) as f:
             _, basename, _ = f.file_parts()
             
             self.seq: str = basename.split(sep="_")[-1]
 
-            self.img: str = f.abspath()
-            self.json: str = f.rm_ext() + ".json"
+            self.img: image = f.abspath()
+            self.json: file = f.rm_ext() + ".json"
 
             file_set: Set = {self.img, self.json}
 
@@ -56,7 +57,7 @@ class BIDSInfo():
 
         for f in file_set:
             if not os.path.exists(f):
-                warn_explicit(message=f"{f} does not exist.",
+                warn_explicit(message=f"WARNING: {f} does not exist.",
                 category=Warning)
 
             if exist:

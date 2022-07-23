@@ -7,19 +7,22 @@ import os
 from ast import literal_eval
 from typing import Any, Dict, List, Optional, Union
 
+from commandio.fileio import file
+
 from dwi_preproc.utils.util import update_json, read_json
 
 
 class BIDSNameError(Exception):
+    """Name error exception that is raised if some label is not BIDS compliant."""
     pass
 
 
 def write_bids_val(
     bids_label: Union[str, List[str]],
     bids_param: List[Any],
-    out_json: str,
-    json_file: Optional[str] = None,
-) -> str:
+    out_json: Union[file,str],
+    json_file: Optional[Union[file,str]] = None,
+) -> Union[file,str]:
     """Writes/appends BIDS values associated with some BIDS key to a JSON file.
 
     NOTE:
@@ -79,7 +82,7 @@ def write_bids_val(
     return update_json(json_file=out_json, dictionary=json_dict)
 
 
-def print_bids_val(bids_label: str, json_file: str) -> None:
+def print_bids_val(bids_label: str, json_file: Union[file, str]) -> None:
     """Prints BIDS related value to the command line.
 
     Args:
