@@ -6,15 +6,18 @@ import nibabel as nib
 
 from typing import List, Optional, Union
 
-from dwi_preproc.diffusion.dwi.enums import SliceAcqOrder
+from commandio.fileio import file
+
+from dwi_preproc.utils.enums import SliceAcqOrder
+from dwi_preproc.utils.niio import image
 
 
 def write_slice_order(
-    s: Union[int, str],
+    s: Union[int, str, image],
     /,
     mb_factor: int,
     mode: str = 'interleaved',
-    out_file: str = 'file.slice.order',
+    out_file: Union[file, str] = 'file.slice.order',
     return_mat: Optional[bool] = False,
 ) -> Union[str, np.array]:
     """Generates the slice acquisition order file for use with ``eddy's`` slice-to-volume motion correction method.
@@ -96,7 +99,7 @@ def write_slice_order(
     return out_file
 
 
-def _num_slices(image: str) -> int:
+def _num_slices(image: Union[image, str]) -> int:
     """Finds the number of slices in the z-direction.
 
     Helper function used to load NIFTI image file data.
