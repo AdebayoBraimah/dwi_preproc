@@ -86,7 +86,6 @@ def _bids_str_match(s: str, /, match_str: str, sep: str ="_") -> str:
     Returns:
         BIDS related information from the sub-string.
     """
-    # NOTE: match_str arg can include wildcards
     try:
         match_str: str = match_str.replace('-','')
         return fnmatch.filter(s.split(sep=sep), match_str)[0][len(match_str):]
