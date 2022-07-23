@@ -1,4 +1,4 @@
-# misc.info/*
-# preproc.wrapper.sh
 .env/*
 .vscode/*.log
+scripts.misc*/*
+__pycache__
